@@ -3,6 +3,9 @@
 /node_modules
 .env*.local
 
+# sql
+*.sql
+
 # Logs
 logs
 *.log
