@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -182,10 +183,11 @@ async function main() {
     ],
   });
 
+  const password = await hash('w.1admin', +process.env.BCRYPT_SALT_ROUNDS);
   await prisma.user.create({
     data: {
-      userName: 'superAdmin',
-      password: 'w1.123456',
+      userName: 'sAdmin',
+      password: password,
       profile: {
         create: {
           nickName: '超级管理员',
