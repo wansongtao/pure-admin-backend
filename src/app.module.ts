@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from 'nestjs-prisma';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PrismaModule } from 'nestjs-prisma';
       },
       inject: [ConfigService],
     }),
+    UsersModule,
   ],
 })
 export class AppModule {}
