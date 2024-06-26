@@ -114,9 +114,8 @@ async function main() {
     skipDuplicates: true,
   });
 
-  await prisma.role.create({
+  const role = await prisma.role.create({
     data: {
-      id: 1,
       name: 'sAdmin',
       description: '系统默认超级管理员',
     },
@@ -125,60 +124,60 @@ async function main() {
   await prisma.roleInPermission.createMany({
     data: [
       {
-        role_id: 1,
-        permission_id: 1,
+        roleId: role.id,
+        permissionId: 1,
       },
       {
-        role_id: 1,
-        permission_id: 2,
+        roleId: role.id,
+        permissionId: 2,
       },
       {
-        role_id: 1,
-        permission_id: 3,
+        roleId: role.id,
+        permissionId: 3,
       },
       {
-        role_id: 1,
-        permission_id: 4,
+        roleId: role.id,
+        permissionId: 4,
       },
       {
-        role_id: 1,
-        permission_id: 5,
+        roleId: role.id,
+        permissionId: 5,
       },
       {
-        role_id: 1,
-        permission_id: 6,
+        roleId: role.id,
+        permissionId: 6,
       },
       {
-        role_id: 1,
-        permission_id: 7,
+        roleId: role.id,
+        permissionId: 7,
       },
       {
-        role_id: 1,
-        permission_id: 8,
+        roleId: role.id,
+        permissionId: 8,
       },
       {
-        role_id: 1,
-        permission_id: 9,
+        roleId: role.id,
+        permissionId: 9,
       },
       {
-        role_id: 1,
-        permission_id: 10,
+        roleId: role.id,
+        permissionId: 10,
       },
       {
-        role_id: 1,
-        permission_id: 11,
+        roleId: role.id,
+        permissionId: 11,
       },
       {
-        role_id: 1,
-        permission_id: 12,
+        roleId: role.id,
+        permissionId: 12,
       },
       {
-        role_id: 1,
-        permission_id: 13,
+        roleId: role.id,
+        permissionId: 13,
       },
       {
-        role_id: 1,
-        permission_id: 14,
+        roleId: role.id,
+        permissionId: 14,
       },
     ],
   });
@@ -193,9 +192,9 @@ async function main() {
           nickName: '超级管理员',
         },
       },
-      role_in_user: {
+      roleInUser: {
         create: {
-          role_id: 1,
+          roleId: role.id,
         },
       },
     },

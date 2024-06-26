@@ -14,15 +14,15 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  userName     String       @unique @map("user_name")
-  password     String
-  disabled     Boolean      @default(false)
-  deleted      Boolean      @default(false)
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
-  profile      Profile?
-  role_in_user RoleInUser[]
+  id         String       @id @default(cuid()) @db.VarChar(100)
+  userName   String       @unique @map("user_name") @db.VarChar(20)
+  password   String       @db.VarChar(100)
+  disabled   Boolean      @default(false)
+  deleted    Boolean      @default(false)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  profile    Profile?
+  roleInUser RoleInUser[]
 
   @@map("users")
 }
@@ -33,43 +33,44 @@ enum Gender {
 }
 
 model Profile {
-  id          Int       @id @default(autoincrement())
-  nickName    String?   @map("nick_name")
-  avatar      String?
-  email       String?
-  phone       String?
+  id          Int       @id @default(autoincrement()) @db.Integer
+  nickName    String?   @map("nick_name") @db.VarChar(50)
+  avatar      String?   @db.VarChar(255)
+  email       String?   @unique @db.VarChar(50)
+  phone       String?   @unique @db.VarChar(20)
   gender      Gender    @default(MA)
   birthday    DateTime?
-  description String?
+  description String?   @db.VarChar(150)
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
-  user        User      @relation(fields: [user_id], references: [id])
-  user_id     String    @unique
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @unique @map("user_id")
 
   @@map("profiles")
 }
 
 model Role {
-  id                 Int                @id @default(autoincrement())
-  name               String             @unique
-  description        String?
-  disabled           Boolean            @default(false)
-  deleted            Boolean            @default(false)
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  role_in_permission RoleInPermission[]
-  role_in_user       RoleInUser[]
+  id               Int                @id @default(autoincrement()) @db.SmallInt
+  name             String             @unique @db.VarChar(50)
+  description      String?            @db.VarChar(150)
+  disabled         Boolean            @default(false)
+  deleted          Boolean            @default(false)
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  roleInPermission RoleInPermission[]
+  roleInUser       RoleInUser[]
 
   @@map("roles")
 }
 
 model RoleInUser {
-  role_id Int
-  user_id String
-  roles   Role   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users   User   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  roles  Role @relation(fields: [roleId], references: [id])
+  roleId Int  @map("role_id")
 
-  @@unique([role_id, user_id], map: "role_id_user_id_unique")
+  users  User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  @@id([roleId, userId])
   @@map("role_in_user")
 }
 
@@ -80,33 +81,34 @@ enum MenuType {
 }
 
 model Permission {
-  id                 Int                @id @default(autoincrement())
-  pid                Int                @default(0)
-  type               MenuType           @default(MENU)
-  name               String             @unique
-  permission         String?             
-  icon               String?
-  path               String?
-  component          String?
-  redirect           String?
-  disabled           Boolean            @default(false)
-  hidden             Boolean            @default(false)
-  cache              Boolean            @default(false)
-  props              Boolean            @default(false)
-  deleted            Boolean            @default(false)
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  role_in_permission RoleInPermission[]
+  id               Int                @id @default(autoincrement()) @db.SmallInt
+  pid              Int                @default(0) @db.SmallInt
+  type             MenuType           @default(MENU)
+  name             String             @unique @db.VarChar(50)
+  permission       String?            @unique @db.VarChar(50)
+  icon             String?            @db.VarChar(50)
+  path             String?            @db.VarChar(50)
+  component        String?            @db.VarChar(150)
+  redirect         String?            @db.VarChar(100)
+  disabled         Boolean            @default(false)
+  hidden           Boolean            @default(false)
+  cache            Boolean            @default(false)
+  props            Boolean            @default(false)
+  deleted          Boolean            @default(false)
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  roleInPermission RoleInPermission[]
 
   @@map("permissions")
 }
 
 model RoleInPermission {
-  role_id       Int
-  permission_id Int
-  permissions   Permission @relation(fields: [permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  roles         Role       @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  permissions  Permission @relation(fields: [permissionId], references: [id])
+  permissionId Int        @map("permission_id")
 
-  @@unique([role_id, permission_id], map: "permission_id_role_id_unique")
+  roles  Role @relation(fields: [roleId], references: [id])
+  roleId Int  @map("role_id")
+
+  @@id([roleId, permissionId])
   @@map("role_in_permission")
 }
