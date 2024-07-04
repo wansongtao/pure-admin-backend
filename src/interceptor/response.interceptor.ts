@@ -5,8 +5,9 @@ import {
   CallHandler,
   StreamableFile,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+import type { Observable } from 'rxjs';
 import type { Response } from 'express';
 import type { ApiResponse } from '../interfaces/api-response.interface';
 
