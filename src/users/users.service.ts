@@ -34,9 +34,9 @@ export class UsersService {
         profile: {
           select: { nickName: true, avatar: true, email: true },
         },
-        role_in_user: {
+        roleInUser: {
           select: {
-            role_id: true,
+            roleId: true,
           },
         },
       },
