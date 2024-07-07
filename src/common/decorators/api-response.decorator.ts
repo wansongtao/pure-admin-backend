@@ -4,7 +4,7 @@ import { ResponseEntity } from '../entities/api-response.entity';
 
 export const ApiResponse = <TModel extends Type<any>>(
   model?: TModel,
-  type = 'string',
+  type: 'string' | 'array' | 'object' = 'string',
 ) => {
   return applyDecorators(
     ApiExtraModels(ResponseEntity, model),
