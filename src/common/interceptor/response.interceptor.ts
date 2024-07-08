@@ -32,14 +32,6 @@ export class ResponseInterceptor<T>
           return data;
         }
 
-        if (data instanceof Error) {
-          return {
-            code: data?.['status'] ?? 500,
-            data: null,
-            message: data?.['message'] ?? 'Internal server error',
-          };
-        }
-
         return {
           code: data?.code ?? response.statusCode,
           data,
