@@ -38,4 +38,13 @@ export class AuthController {
       userAgent,
     });
   }
+
+  @Get('logout')
+  @ApiOperation({
+    summary: '用户登出',
+  })
+  @ApiBaseResponse()
+  logout(@Headers('authorization') token: string) {
+    return this.authService.logout(token);
+  }
 }

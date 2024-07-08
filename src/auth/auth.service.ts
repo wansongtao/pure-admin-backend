@@ -45,7 +45,7 @@ export class AuthService {
 
   async verifyCaptcha(ip: string, userAgent: string, captcha: string) {
     const key = this.generateKey(ip, userAgent);
-    const captchaInRedis = await this.redis.get(`captcha: ${key}`);
+    const captchaInRedis = await this.redis.get(key);
     if (captchaInRedis === captcha) {
       this.redis.del(key);
       return true;
@@ -81,5 +81,10 @@ export class AuthService {
     const payload = { userId: user.id, username: user.userName };
     const token = this.jwtService.sign(payload);
     return { token };
+  }
+
+  logout(token: string) {
+    this.redis.set(token, '', 'EX', +this.config.get('JWT_EXPIRES_IN'));
+    return null;
   }
 }
