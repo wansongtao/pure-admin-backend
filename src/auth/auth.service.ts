@@ -3,15 +3,14 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import * as svgCaptcha from 'svg-captcha';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'nestjs-prisma';
 import { JwtService } from '@nestjs/jwt';
+import * as svgCaptcha from 'svg-captcha';
 import * as bcrypt from 'bcrypt';
-
-import type Redis from 'ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class AuthService {
@@ -28,16 +27,20 @@ export class AuthService {
   }
 
   generateCaptcha(ip: string, userAgent: string) {
-    const captcha = svgCaptcha.create();
-    const key = this.generateKey(ip, userAgent);
-    this.redis.set(
-      key,
-      captcha.text,
-      'EX',
-      +this.config.get('CAPTCHA_EXPIRES_IN'),
-    );
+    const captcha = svgCaptcha.create({
+      size: 4,
+      noise: 2,
+      color: true,
+      background: '#f0f0f0',
+    });
 
-    return `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
+    const key = this.generateKey(ip, userAgent);
+    const expiresIn = +this.config.get('CAPTCHA_EXPIRES_IN') || 120;
+    this.redis.set(key, captcha.text, 'EX', expiresIn);
+
+    return {
+      captcha: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`,
+    };
   }
 
   async verifyCaptcha(ip: string, userAgent: string, captcha: string) {
@@ -76,6 +79,7 @@ export class AuthService {
     }
 
     const payload = { userId: user.id, username: user.userName };
-    return this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload);
+    return { token };
   }
 }

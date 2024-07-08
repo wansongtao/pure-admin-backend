@@ -1,9 +1,9 @@
 import { Controller, Get, Ip, Headers, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
-import { AuthEntity } from './entity/auth.entity';
-import { ApiResponse } from 'src/common/decorators/api-response.decorator';
+import { AuthEntity, LoginEntity } from './entity/auth.entity';
+import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('auth')
@@ -13,14 +13,21 @@ export class AuthController {
 
   @Public()
   @Get('captcha')
-  @ApiResponse(AuthEntity)
+  @ApiOperation({
+    summary: '获取验证码',
+  })
+  @ApiBaseResponse(AuthEntity)
   getCaptcha(@Ip() ip: string, @Headers('user-agent') userAgent: string) {
     return this.authService.generateCaptcha(ip, userAgent);
   }
 
   @Public()
   @Post('login')
-  @ApiResponse(AuthEntity)
+  @ApiOperation({
+    summary: '用户登录',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiBaseResponse(LoginEntity)
   login(
     @Body() { userName, password, captcha }: LoginDto,
     @Ip() ip: string,
