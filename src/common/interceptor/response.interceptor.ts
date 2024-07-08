@@ -32,11 +32,12 @@ export class ResponseInterceptor<T>
           return data;
         }
 
-        return {
+        const result: ResponseEntity<T> = {
           code: data?.code ?? response.statusCode,
           data,
           message: data?.message ?? 'Success',
         };
+        return result;
       }),
     );
   }
