@@ -5,7 +5,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ResponseEntity } from '../entities/api-response.entity';
+import { BaseResponseEntity } from '../entities/api-response.entity';
 
 @Catch(HttpException)
 export class ResponseExceptionFilter implements ExceptionFilter {
@@ -15,7 +15,7 @@ export class ResponseExceptionFilter implements ExceptionFilter {
     const statusCode = exception.getStatus();
     const res = exception.getResponse() as { message: string[] };
 
-    const data: ResponseEntity<null> = {
+    const data: BaseResponseEntity<null> = {
       code: statusCode,
       data: null,
       message: res?.message?.join ? res?.message[0] : exception.message,

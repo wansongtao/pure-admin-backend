@@ -8,16 +8,16 @@ import {
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Response } from 'express';
-import { ResponseEntity } from '../entities/api-response.entity';
+import { BaseResponseEntity } from '../entities/api-response.entity';
 
 @Injectable()
 export class ResponseInterceptor<T>
-  implements NestInterceptor<T, ResponseEntity<T> | T>
+  implements NestInterceptor<T, BaseResponseEntity<T> | T>
 {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<ResponseEntity<T> | T> {
+  ): Observable<BaseResponseEntity<T> | T> {
     return next.handle().pipe(
       map((data) => {
         // 检查是否为二进制数据或流
@@ -32,7 +32,7 @@ export class ResponseInterceptor<T>
           return data;
         }
 
-        const result: ResponseEntity<T> = {
+        const result: BaseResponseEntity<T> = {
           code: data?.code ?? response.statusCode,
           data,
           message: data?.message ?? 'Success',
