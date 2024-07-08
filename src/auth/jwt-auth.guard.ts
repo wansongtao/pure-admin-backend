@@ -2,22 +2,38 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly reflector: Reflector) {
+  constructor(
+    private readonly reflector: Reflector,
+    @InjectRedis() private readonly redis: Redis,
+  ) {
     super();
   }
 
-  canActivate(context: ExecutionContext) {
+  async canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-
     if (isPublic) {
       return true;
     }
-    return super.canActivate(context);
+
+    const request = context.switchToHttp().getRequest();
+    const token = request.headers.authorization as string;
+    if (!token) {
+      return false;
+    }
+
+    const isBlackListed = await this.redis.exists(token);
+    if (isBlackListed) {
+      return false;
+    }
+
+    return super.canActivate(context) as any;
   }
 }
