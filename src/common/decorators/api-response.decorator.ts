@@ -1,17 +1,24 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { ResponseEntity } from '../entities/api-response.entity';
+import {
+  BaseResponseEntity,
+  NullResponseEntity,
+} from '../entities/api-response.entity';
 
-export const ApiResponse = <TModel extends Type<any>>(
+export const ApiBaseResponse = <TModel extends Type<any>>(
   model?: TModel,
-  type: 'string' | 'array' | 'object' = 'string',
+  type: 'string' | 'array' | 'object' = 'object',
 ) => {
+  if (!model) {
+    return ApiOkResponse({ type: NullResponseEntity });
+  }
+
   return applyDecorators(
-    ApiExtraModels(ResponseEntity, model),
+    ApiExtraModels(BaseResponseEntity, model),
     ApiOkResponse({
       schema: {
         allOf: [
-          { $ref: getSchemaPath(ResponseEntity) },
+          { $ref: getSchemaPath(BaseResponseEntity) },
           {
             properties: {
               data: {
