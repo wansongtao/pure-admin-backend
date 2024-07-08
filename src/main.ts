@@ -4,11 +4,13 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ResponseInterceptor } from './common/interceptor/response.interceptor';
 import { ValidationPipe } from '@nestjs/common';
+import { ResponseExceptionFilter } from './common/filters/response-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalFilters(new ResponseExceptionFilter());
 
   const projectConfig = app.get(ConfigService);
   const prefix = projectConfig.get<string>('PREFIX');
