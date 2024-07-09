@@ -85,6 +85,5 @@ export class AuthService {
 
   logout(token: string) {
     this.redis.set(token, '', 'EX', +this.config.get('JWT_EXPIRES_IN'));
-    return null;
   }
 }
