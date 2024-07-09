@@ -24,11 +24,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     const request = context.switchToHttp().getRequest();
-    const token = request.headers.authorization as string;
+    let token = request.headers.authorization as string;
     if (!token) {
       return false;
     }
 
+    token = token.split(' ')[1];
     const isBlackListed = await this.redis.exists(token);
     if (isBlackListed) {
       return false;

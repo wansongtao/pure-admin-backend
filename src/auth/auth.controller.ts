@@ -45,6 +45,6 @@ export class AuthController {
   })
   @ApiBaseResponse()
   logout(@Headers('authorization') token: string) {
-    return this.authService.logout(token);
+    return this.authService.logout(token.split(' ')[1]);
   }
 }
