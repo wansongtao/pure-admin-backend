@@ -34,7 +34,7 @@ export class ResponseInterceptor<T>
 
         const result: BaseResponseEntity<T> = {
           code: data?.code ?? response.statusCode,
-          data,
+          data: data ?? null,
           message: data?.message ?? 'Success',
         };
         return result;
