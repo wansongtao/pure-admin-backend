@@ -2,7 +2,7 @@ import { Controller, Get, Ip, Headers, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
-import { AuthEntity, LoginEntity } from './entity/auth.entity';
+import { AuthEntity, LoginEntity } from './entities/auth.entity';
 import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 
