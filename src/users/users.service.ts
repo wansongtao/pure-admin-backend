@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotAcceptableException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
-// import { hash } from 'bcrypt';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -12,29 +16,46 @@ export class UsersService {
     private readonly config: ConfigService,
   ) {}
 
+  private generateHashPassword(password: string) {
+    return hash(password, +this.config.get('BCRYPT_SALT_ROUNDS') || 10);
+  }
+
   async create(createUserDto: CreateUserDto) {
-    console.log(createUserDto);
-    return null;
+    const user = await this.prisma.user.findUnique({
+      where: { userName: createUserDto.userName },
+      select: { id: true },
+    });
+    if (user) {
+      throw new NotAcceptableException('用户名已存在');
+    }
 
-    // const password = this.config.get('DEFAULT_PASSWORD') || 'd.123456';
-    // const hashedPassword = await hash(
-    //   password,
-    //   +this.config.get('BCRYPT_SALT_ROUNDS') || 10,
-    // );
+    const password = this.config.get('DEFAULT_PASSWORD') || 'd.123456';
+    const hashedPassword = await this.generateHashPassword(password);
 
-    // return this.prisma.user.create({
-    //   data: {
-    //     userName: createUserDto.userName,
-    //     password: hashedPassword,
-    //     disabled: createUserDto.disabled,
-    //     profile: {
-    //       create: {
-    //         nickName: createUserDto.nickName,
-    //         avatar: createUserDto.avatar,
-    //       },
-    //     },
-    //   },
-    // });
+    this.prisma.user
+      .create({
+        data: {
+          userName: createUserDto.userName,
+          password: hashedPassword,
+          disabled: createUserDto.disabled,
+          profile: {
+            create: {
+              nickName: createUserDto.nickName,
+              avatar: createUserDto.avatar,
+            },
+          },
+          roleInUser: createUserDto.roles && {
+            createMany: {
+              data: createUserDto.roles.map((roleId) => ({
+                roleId,
+              })),
+            },
+          },
+        },
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('创建用户失败');
+      });
   }
 
   findAll() {

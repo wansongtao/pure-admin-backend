@@ -3,8 +3,10 @@ import {
   IsNotEmpty,
   Matches,
   IsBoolean,
-  IsEmpty,
   MaxLength,
+  ValidateIf,
+  IsNumber,
+  IsUrl,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -14,21 +16,23 @@ export class CreateUserDto {
   userName: string;
 
   @Matches(/^[a-zA-Z\u4e00-\u9fa5']{1,50}$/, { message: '昵称格式错误' })
-  @IsEmpty()
+  @ValidateIf((o) => o.nickName !== undefined)
   @ApiProperty({ required: false, default: '' })
   nickName?: string;
 
   @IsBoolean({ message: '禁用状态必须为布尔值' })
-  @IsEmpty()
+  @ValidateIf((o) => o.disabled !== undefined)
   @ApiProperty({ required: false, default: false })
   disabled?: boolean;
 
   @MaxLength(255, { message: '头像url长度不能超过255' })
-  @IsEmpty()
+  @IsUrl(undefined, { message: '头像url格式错误' })
+  @ValidateIf((o) => o.avatar !== undefined)
   @ApiProperty({ required: false, default: '' })
   avatar?: string;
 
-  @IsEmpty()
+  @IsNumber({}, { message: '角色id列表必须为数组', each: true })
+  @ValidateIf((o) => o.roles !== undefined)
   @ApiProperty({ required: false, description: '角色id列表', default: null })
-  roles?: string[];
+  roles?: number[];
 }
