@@ -26,7 +26,7 @@ export class UsersService {
       select: { id: true },
     });
     if (user) {
-      throw new NotAcceptableException('用户名已存在');
+      throw new NotAcceptableException('The user already exists');
     }
 
     const password = this.config.get('DEFAULT_PASSWORD') || 'd.123456';
@@ -54,7 +54,7 @@ export class UsersService {
         },
       })
       .catch(() => {
-        throw new InternalServerErrorException('创建用户失败');
+        throw new InternalServerErrorException('Failed to create a user');
       });
   }
 
