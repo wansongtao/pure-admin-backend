@@ -100,4 +100,15 @@ export class UsersService {
   remove(id: string) {
     return this.prisma.user.update({ where: { id }, data: { deleted: true } });
   }
+
+  async validateUser(userName: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        userName,
+        deleted: false,
+        disabled: false,
+      },
+      select: { id: true, userName: true, password: true },
+    });
+  }
 }

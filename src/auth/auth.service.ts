@@ -6,8 +6,8 @@ import {
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from 'nestjs-prisma';
 import { JwtService } from '@nestjs/jwt';
+import { UsersService } from '../users/users.service';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
@@ -17,8 +17,8 @@ export class AuthService {
   constructor(
     private readonly config: ConfigService,
     @InjectRedis() private readonly redis: Redis,
-    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   private generateKey(ip: string, userAgent: string) {
@@ -65,10 +65,7 @@ export class AuthService {
       throw new UnauthorizedException('Captcha is invalid');
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { userName, deleted: false, disabled: false },
-    });
-
+    const user = await this.usersService.validateUser(userName);
     if (!user) {
       throw new NotFoundException(`No user found for userName: ${userName}`);
     }
