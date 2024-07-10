@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class BaseResponseEntity<T = null> {
   @ApiProperty({ default: 200 })
-  code: HttpStatus;
+  statusCode: HttpStatus;
 
   @ApiProperty()
   data: T;
@@ -14,7 +14,7 @@ export class BaseResponseEntity<T = null> {
 
 export class NullResponseEntity implements BaseResponseEntity<string> {
   @ApiProperty({ default: 200 })
-  code: HttpStatus;
+  statusCode: HttpStatus;
 
   @ApiProperty({ default: null })
   data: string;

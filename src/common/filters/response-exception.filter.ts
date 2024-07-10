@@ -16,7 +16,7 @@ export class ResponseExceptionFilter implements ExceptionFilter {
     const res = exception.getResponse() as { message: string[] };
 
     const data: BaseResponseEntity<null> = {
-      code: statusCode,
+      statusCode,
       data: null,
       message: res?.message?.join ? res?.message[0] : exception.message,
     };
