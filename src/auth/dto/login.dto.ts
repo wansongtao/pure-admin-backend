@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, Matches } from 'class-validator';
 
 export class LoginDto {
-  @Matches(/^[a-zA-Z][a-zA-Z0-9]{4,10}$/, { message: '用户名格式错误' })
   @IsNotEmpty({ message: '用户名不能为空' })
   @ApiProperty()
   userName: string;
