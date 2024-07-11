@@ -12,16 +12,16 @@ import { hash } from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
   ) {}
 
   private generateHashPassword(password: string) {
-    return hash(password, +this.config.get('BCRYPT_SALT_ROUNDS') || 10);
+    return hash(password, +this.configService.get('BCRYPT_SALT_ROUNDS') || 10);
   }
 
   async create(createUserDto: CreateUserDto) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prismaService.user.findUnique({
       where: { userName: createUserDto.userName },
       select: { id: true },
     });
@@ -29,10 +29,10 @@ export class UsersService {
       throw new NotAcceptableException('The user already exists');
     }
 
-    const password = this.config.get('DEFAULT_PASSWORD') || 'd.123456';
+    const password = this.configService.get('DEFAULT_PASSWORD') || 'd.123456';
     const hashedPassword = await this.generateHashPassword(password);
 
-    this.prisma.user
+    this.prismaService.user
       .create({
         data: {
           userName: createUserDto.userName,
@@ -59,7 +59,7 @@ export class UsersService {
   }
 
   findAll() {
-    return this.prisma.user.findMany({
+    return this.prismaService.user.findMany({
       where: { deleted: false },
       select: {
         id: true,
@@ -80,7 +80,7 @@ export class UsersService {
   }
 
   findOne(id: string) {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prismaService.user.findUnique({ where: { id } });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -90,19 +90,22 @@ export class UsersService {
     // if (updateUserDto.password) {
     //   updateUserDto.password = await hash(
     //     updateUserDto.password,
-    //     +this.config.get<string>('BCRYPT_SALT_ROUNDS'),
+    //     +this.configService.get<string>('BCRYPT_SALT_ROUNDS'),
     //   );
     // }
 
-    // return this.prisma.user.update({ where: { id }, data: updateUserDto });
+    // return this.prismaService.user.update({ where: { id }, data: updateUserDto });
   }
 
   remove(id: string) {
-    return this.prisma.user.update({ where: { id }, data: { deleted: true } });
+    return this.prismaService.user.update({
+      where: { id },
+      data: { deleted: true },
+    });
   }
 
   async validateUser(userName: string) {
-    return this.prisma.user.findFirst({
+    return this.prismaService.user.findFirst({
       where: {
         userName,
         deleted: false,
