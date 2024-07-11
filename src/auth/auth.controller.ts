@@ -17,7 +17,10 @@ export class AuthController {
   @ApiBaseResponse(AuthEntity)
   @Public()
   @Get('captcha')
-  getCaptcha(@Ip() ip: string, @Headers('user-agent') userAgent: string) {
+  getCaptcha(
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ): AuthEntity {
     return this.authService.generateCaptcha(ip, userAgent);
   }
 
@@ -31,7 +34,7 @@ export class AuthController {
     @Body() { userName, password, captcha }: LoginDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
-  ) {
+  ): Promise<LoginEntity> {
     return this.authService.login(userName, password, captcha, {
       ip,
       userAgent,
