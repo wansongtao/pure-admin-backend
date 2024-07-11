@@ -81,6 +81,11 @@ export class AuthService {
   }
 
   logout(token: string) {
-    this.redis.set(token, '', 'EX', +this.configService.get('JWT_EXPIRES_IN'));
+    this.redis.set(
+      token,
+      '',
+      'EX',
+      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+    );
   }
 }
