@@ -8,6 +8,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator docs {
+  provider = "node node_modules/prisma-docs-generator"
+  output   = "docs/"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
