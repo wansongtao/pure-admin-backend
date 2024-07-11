@@ -12,6 +12,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
+import { UserEntity } from './entities/user.entity';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -33,8 +34,12 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @ApiOperation({
+    summary: '获取用户详情',
+  })
+  @ApiBaseResponse(UserEntity)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<UserEntity> {
     return this.usersService.findOne(id);
   }
 

@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotAcceptableException,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -79,8 +80,44 @@ export class UsersService {
     });
   }
 
-  findOne(id: string) {
-    return this.prismaService.user.findUnique({ where: { id } });
+  async findOne(id: string) {
+    const user = await this.prismaService.user
+      .findUnique({
+        where: { id, deleted: false },
+        select: {
+          id: true,
+          userName: true,
+          disabled: true,
+          createdAt: true,
+          profile: {
+            select: { nickName: true, avatar: true },
+          },
+          roleInUser: {
+            select: {
+              roleId: true,
+            },
+          },
+        },
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('Failed to find a user');
+      });
+
+    if (!user) {
+      throw new NotFoundException('The user does not exist');
+    }
+
+    const profile = user.profile;
+    const roles = user.roleInUser.map((role) => role.roleId);
+
+    return {
+      id: user.id,
+      userName: user.userName,
+      disabled: user.disabled,
+      createdAt: user.createdAt,
+      ...profile,
+      roles,
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
