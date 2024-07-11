@@ -75,7 +75,7 @@ export class AuthService {
       throw new UnauthorizedException('Password is invalid');
     }
 
-    const payload = { userId: user.id, username: user.userName };
+    const payload = { userId: user.id, userName: user.userName };
     const token = this.jwtService.sign(payload);
     return { token };
   }
