@@ -15,7 +15,7 @@ import Redis from 'ioredis';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly config: ConfigService,
+    private readonly configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
@@ -35,7 +35,7 @@ export class AuthService {
     });
 
     const key = this.generateKey(ip, userAgent);
-    const expiresIn = +this.config.get('CAPTCHA_EXPIRES_IN') || 120;
+    const expiresIn = +this.configService.get('CAPTCHA_EXPIRES_IN') || 120;
     this.redis.set(key, captcha.text, 'EX', expiresIn);
 
     return {
@@ -81,6 +81,6 @@ export class AuthService {
   }
 
   logout(token: string) {
-    this.redis.set(token, '', 'EX', +this.config.get('JWT_EXPIRES_IN'));
+    this.redis.set(token, '', 'EX', +this.configService.get('JWT_EXPIRES_IN'));
   }
 }
