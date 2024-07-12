@@ -13,7 +13,7 @@ export class UserEntity
   @ApiProperty({ description: '是否禁用', default: false })
   disabled: boolean;
 
-  @ApiProperty({ description: '创建时间' })
+  @ApiProperty({ description: '创建时间(UTC)' })
   createdAt: Date;
 
   @ApiProperty({ description: '用户角色', type: [Number], required: false })
@@ -38,7 +38,7 @@ export class UserEntity
   })
   gender?: Profile['gender'];
 
-  @ApiProperty({ description: '用户生日', type: Date, required: false })
+  @ApiProperty({ description: '用户生日(UTC)', type: Date, required: false })
   birthday?: Profile['birthday'];
 
   @ApiProperty({ description: '用户描述', type: 'string', required: false })
