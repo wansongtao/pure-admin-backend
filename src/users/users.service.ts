@@ -40,6 +40,17 @@ export class UsersService {
     return user.userName;
   }
 
+  async validateUser(userName: string) {
+    return this.prismaService.user.findFirst({
+      where: {
+        userName,
+        deleted: false,
+        disabled: false,
+      },
+      select: { id: true, userName: true, password: true },
+    });
+  }
+
   async create(createUserDto: CreateUserDto) {
     const user = await this.prismaService.user.findUnique({
       where: { userName: createUserDto.userName },
@@ -228,14 +239,27 @@ export class UsersService {
     });
   }
 
-  async validateUser(userName: string) {
-    return this.prismaService.user.findFirst({
-      where: {
-        userName,
-        deleted: false,
-        disabled: false,
-      },
-      select: { id: true, userName: true, password: true },
+  async batchRemove(ids: string[]) {
+    const userNames = await this.prismaService.user.findMany({
+      where: { id: { in: ids }, deleted: false },
+      select: { userName: true },
+    });
+
+    if (userNames.length !== ids.length) {
+      throw new NotFoundException('Some users do not exist');
+    }
+
+    if (
+      userNames.some(({ userName }) => this.isDefaultAdministrator(userName))
+    ) {
+      throw new NotAcceptableException(
+        'The super administrator cannot be deleted',
+      );
+    }
+
+    await this.prismaService.user.updateMany({
+      where: { id: { in: ids } },
+      data: { deleted: true },
     });
   }
 }

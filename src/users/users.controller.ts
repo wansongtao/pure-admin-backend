@@ -26,6 +26,7 @@ import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
+import { DeleteUserDto } from './dto/delete-user.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -112,5 +113,14 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @ApiOperation({
+    summary: '批量删除用户',
+  })
+  @ApiBaseResponse()
+  @Post('batch-delete')
+  batchRemove(@Body() deleteUserDto: DeleteUserDto) {
+    return this.usersService.batchRemove(deleteUserDto.ids);
   }
 }
