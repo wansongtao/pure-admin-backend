@@ -31,7 +31,7 @@ export class CreateUserDto {
   @ApiProperty({ required: false, default: '' })
   avatar?: string;
 
-  @IsNumber({}, { message: '角色id列表必须为数组', each: true })
+  @IsNumber({}, { message: '角色id列表必须为数字数组', each: true })
   @IsOptional()
   @ApiProperty({ required: false, description: '角色id列表', default: null })
   roles?: number[];
