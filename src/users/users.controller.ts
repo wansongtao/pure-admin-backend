@@ -11,7 +11,6 @@ import {
   ParseBoolPipe,
   ParseEnumPipe,
   DefaultValuePipe,
-  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -102,12 +101,8 @@ export class UsersController {
   })
   @ApiBaseResponse()
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @Req() req: { user: { userName: string } },
-  ) {
-    return this.usersService.update(id, updateUserDto, req.user.userName);
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
   }
 
   @ApiOperation({

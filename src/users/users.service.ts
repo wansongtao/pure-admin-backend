@@ -176,16 +176,15 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto, userName: string) {
-    if (updateUserDto.disabled || updateUserDto.roles) {
-      const defaultName =
-        this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
-
-      if (userName === defaultName) {
-        throw new NotAcceptableException(
-          'The super administrator cannot be disabled or have roles changed',
-        );
-      }
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const userName = await this.findUserName(id);
+    if (
+      (updateUserDto.disabled || updateUserDto.roles) &&
+      this.isDefaultAdministrator(userName)
+    ) {
+      throw new NotAcceptableException(
+        'The super administrator cannot be disabled or have roles changed',
+      );
     }
 
     await this.prismaService.user
