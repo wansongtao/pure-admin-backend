@@ -158,18 +158,49 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    console.log(updateUserDto);
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    userName: string,
+  ): Promise<null> {
+    if (updateUserDto.disabled || updateUserDto.roles) {
+      const defaultName =
+        this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
+
+      if (userName === defaultName) {
+        throw new NotAcceptableException(
+          'The super administrator cannot be disabled or have roles changed',
+        );
+      }
+    }
+
+    await this.prismaService.user
+      .update({
+        where: { id, deleted: false },
+        data: {
+          disabled: updateUserDto.disabled,
+          profile: {
+            update: {
+              nickName: updateUserDto.nickName,
+              avatar: updateUserDto.avatar,
+            },
+          },
+          roleInUser: updateUserDto.roles && {
+            deleteMany: {},
+            createMany: {
+              data: updateUserDto.roles.map((roleId) => ({
+                roleId,
+              })),
+            },
+          },
+        },
+        select: { id: true },
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('Failed to update a user');
+      });
 
     return null;
-    // if (updateUserDto.password) {
-    //   updateUserDto.password = await hash(
-    //     updateUserDto.password,
-    //     +this.configService.get<string>('BCRYPT_SALT_ROUNDS'),
-    //   );
-    // }
-
-    // return this.prismaService.user.update({ where: { id }, data: updateUserDto });
   }
 
   remove(id: string) {
