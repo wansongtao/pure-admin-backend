@@ -23,7 +23,8 @@
     "migrate:deploy": "dotenv -e .env.production -- npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
     "prisma:studio": "npx prisma studio",
-    "prisma:seed": "dotenv -e .env.development -- npx prisma db seed"
+    "prisma:seed": "dotenv -e .env.development -- npx prisma db seed",
+    "prisma:docs": "npx http-server ./prisma/docs"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
