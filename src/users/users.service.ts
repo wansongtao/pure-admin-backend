@@ -34,7 +34,7 @@ export class UsersService {
     const password = this.configService.get('DEFAULT_PASSWORD') || 'd.123456';
     const hashedPassword = await this.generateHashPassword(password);
 
-    this.prismaService.user
+    await this.prismaService.user
       .create({
         data: {
           userName: createUserDto.userName,
@@ -158,11 +158,7 @@ export class UsersService {
     };
   }
 
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-    userName: string,
-  ): Promise<null> {
+  async update(id: string, updateUserDto: UpdateUserDto, userName: string) {
     if (updateUserDto.disabled || updateUserDto.roles) {
       const defaultName =
         this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
@@ -199,8 +195,6 @@ export class UsersService {
       .catch(() => {
         throw new InternalServerErrorException('Failed to update a user');
       });
-
-    return null;
   }
 
   remove(id: string) {
