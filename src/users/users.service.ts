@@ -4,11 +4,12 @@ import {
   NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
 import { hash } from 'bcrypt';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryUserDto } from './dto/query-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -59,24 +60,61 @@ export class UsersService {
       });
   }
 
-  findAll() {
-    return this.prismaService.user.findMany({
-      where: { deleted: false },
-      select: {
-        id: true,
-        userName: true,
-        disabled: true,
-        createdAt: true,
-        updatedAt: true,
-        profile: {
-          select: { nickName: true, avatar: true, email: true },
+  async findAll(queryUserDto: QueryUserDto) {
+    const users = await this.prismaService.user
+      .findMany({
+        skip: queryUserDto.pageSize * (queryUserDto.page - 1),
+        take: queryUserDto.pageSize,
+        orderBy: { createdAt: queryUserDto.sort },
+        where: {
+          deleted: false,
+          disabled: queryUserDto.disabled,
+          createdAt: { gte: queryUserDto.beginTime, lte: queryUserDto.endTime },
+          OR: [
+            {
+              userName: { contains: queryUserDto.keyword, mode: 'insensitive' },
+            },
+            {
+              profile: {
+                nickName: {
+                  contains: queryUserDto.keyword,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          ],
         },
-        roleInUser: {
-          select: {
-            roleId: true,
+        select: {
+          id: true,
+          userName: true,
+          disabled: true,
+          createdAt: true,
+          profile: {
+            select: { nickName: true, avatar: true },
+          },
+          roleInUser: {
+            select: {
+              roleId: true,
+            },
           },
         },
-      },
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('Failed to find users');
+      });
+
+    return users.map((user) => {
+      const profile = user.profile;
+      const roles = user.roleInUser.map((role) => role.roleId);
+
+      return {
+        id: user.id,
+        userName: user.userName,
+        disabled: user.disabled,
+        createdAt: user.createdAt,
+        ...profile,
+        roles,
+      };
     });
   }
 

@@ -6,13 +6,26 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
+  ParseIntPipe,
+  ParseBoolPipe,
+  ParseEnumPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
+import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
+import { ParseDatePipe } from '../common/pipe/parse-date.pipe';
+import { ParseStringPipe } from '../common/pipe/parse-string.pipe';
+import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
-import { UserEntity } from './entities/user.entity';
+import { QueryUserDto } from './dto/query-user.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -29,9 +42,49 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @ApiOperation({
+    summary: '获取用户列表',
+  })
+  @ApiQuery({ type: QueryUserDto, required: false })
+  @ApiBaseResponse(UserEntity, 'array')
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(
+    @Query(
+      'page',
+      new DefaultValuePipe(1),
+      new ParseIntPipe({ optional: true }),
+    )
+    page?: QueryUserDto['page'],
+    @Query(
+      'pageSize',
+      new DefaultValuePipe(10),
+      new ParseIntPipe({ optional: true }),
+    )
+    pageSize?: QueryUserDto['pageSize'],
+    @Query('beginTime', new ParseDatePipe({ optional: true }))
+    beginTime?: QueryUserDto['beginTime'],
+    @Query('endTime', new ParseDatePipe({ optional: true }))
+    endTime?: QueryUserDto['endTime'],
+    @Query(
+      'sort',
+      new DefaultValuePipe('desc'),
+      new ParseEnumPipe(['asc', 'desc'], { optional: true }),
+    )
+    sort?: QueryUserDto['sort'],
+    @Query('disabled', new ParseBoolPipe({ optional: true }))
+    disabled?: QueryUserDto['disabled'],
+    @Query('keyword', new ParseStringPipe({ optional: true, maxLength: 50 }))
+    keyword?: QueryUserDto['keyword'],
+  ): Promise<UserEntity[]> {
+    return this.usersService.findAll({
+      page,
+      pageSize,
+      beginTime,
+      endTime,
+      sort,
+      disabled,
+      keyword,
+    });
   }
 
   @ApiOperation({
