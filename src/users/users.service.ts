@@ -22,6 +22,24 @@ export class UsersService {
     return hash(password, +this.configService.get('BCRYPT_SALT_ROUNDS') || 10);
   }
 
+  private isDefaultAdministrator(userName: string) {
+    const defaultName = this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
+    return userName === defaultName;
+  }
+
+  private async findUserName(id: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id, deleted: false },
+      select: { userName: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('The user does not exist');
+    }
+
+    return user.userName;
+  }
+
   async create(createUserDto: CreateUserDto) {
     const user = await this.prismaService.user.findUnique({
       where: { userName: createUserDto.userName },
@@ -197,8 +215,15 @@ export class UsersService {
       });
   }
 
-  remove(id: string) {
-    return this.prismaService.user.update({
+  async remove(id: string) {
+    const userName = await this.findUserName(id);
+    if (this.isDefaultAdministrator(userName)) {
+      throw new NotAcceptableException(
+        'The super administrator cannot be deleted',
+      );
+    }
+
+    await this.prismaService.user.update({
       where: { id },
       data: { deleted: true },
     });

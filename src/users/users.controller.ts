@@ -110,6 +110,10 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto, req.user.userName);
   }
 
+  @ApiOperation({
+    summary: '删除用户',
+  })
+  @ApiBaseResponse()
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
