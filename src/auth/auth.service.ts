@@ -46,7 +46,10 @@ export class AuthService {
   async verifyCaptcha(ip: string, userAgent: string, captcha: string) {
     const key = this.generateKey(ip, userAgent);
     const captchaInRedis = await this.redis.get(key);
-    if (captchaInRedis === captcha) {
+    if (
+      captchaInRedis &&
+      captchaInRedis.toLowerCase() === captcha.toLowerCase()
+    ) {
       this.redis.del(key);
       return true;
     }
