@@ -4,6 +4,20 @@
 
 这是一个基于Nest.js的后端服务，用于提供后台管理系统的`REST API`接口服务。主要功能包括：用户管理、角色管理、权限管理、菜单管理、日志管理等。
 
+## Jwt
+
+# 生成私钥
+
+```bash
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+```
+
+# 从私钥导出公钥
+
+```bash
+openssl rsa -pubout -in private_key.pem -out public_key.pem
+```
+
 ## Installation
 
 ```bash
