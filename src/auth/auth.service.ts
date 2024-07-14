@@ -80,6 +80,12 @@ export class AuthService {
 
     const payload = { userId: user.id, userName: user.userName };
     const token = this.jwtService.sign(payload);
+    this.redis.set(
+      `login:${user.id}`,
+      token,
+      'EX',
+      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+    );
     return { token };
   }
 
