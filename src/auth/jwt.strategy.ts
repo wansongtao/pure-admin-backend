@@ -6,6 +6,8 @@ import { UsersService } from '../users/users.service';
 import { Request } from 'express';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -14,12 +16,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly usersService: UsersService,
     @InjectRedis() private readonly redis: Redis,
   ) {
-    const secret = configService.get('JWT_SECRET');
+    const staticPath = join(__dirname, '../../');
+    const publicKeyPath = configService.get<string>('JWT_PUBLIC_KEY');
+    const publicKey = readFileSync(join(staticPath, publicKeyPath));
 
     const options: StrategyOptionsWithRequest = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret,
+      secretOrKey: publicKey,
       passReqToCallback: true,
     };
 

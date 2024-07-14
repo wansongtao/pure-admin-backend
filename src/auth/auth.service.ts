@@ -79,7 +79,7 @@ export class AuthService {
     }
 
     const payload = { userId: user.id, userName: user.userName };
-    const token = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload, { algorithm: 'RS256' });
     this.redis.set(
       `login:${user.id}`,
       token,

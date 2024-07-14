@@ -6,17 +6,30 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: +configService.get<string>('JWT_EXPIRES_IN'),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const staticPath = join(__dirname, '../../');
+        const privateKeyPath = configService.get<string>('JWT_PRIVATE_KEY');
+        const publicKeyPath = configService.get<string>('JWT_PUBLIC_KEY');
+        const privateKey = readFileSync(join(staticPath, privateKeyPath));
+        const publicKey = readFileSync(join(staticPath, publicKeyPath));
+
+        const options = {
+          signOptions: {
+            expiresIn: +configService.get<string>('JWT_EXPIRES_IN'),
+          },
+          privateKey,
+          publicKey,
+        };
+
+        return options;
+      },
       inject: [ConfigService],
     }),
     UsersModule,
