@@ -27,6 +27,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { Permissions } from '../common/decorators/permission.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -38,6 +39,7 @@ export class UsersController {
     summary: '创建用户',
   })
   @ApiBaseResponse()
+  @Permissions('system:user:add')
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -101,6 +103,7 @@ export class UsersController {
     summary: '更新用户',
   })
   @ApiBaseResponse()
+  @Permissions('system:user:edit')
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
@@ -110,6 +113,7 @@ export class UsersController {
     summary: '删除用户',
   })
   @ApiBaseResponse()
+  @Permissions('system:user:del')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
@@ -119,6 +123,7 @@ export class UsersController {
     summary: '批量删除用户',
   })
   @ApiBaseResponse()
+  @Permissions('system:user:del')
   @Post('batch-delete')
   batchRemove(@Body() deleteUserDto: DeleteUserDto) {
     return this.usersService.batchRemove(deleteUserDto.ids);
