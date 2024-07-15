@@ -7,8 +7,8 @@ import {
   LoginEntity,
   UserInfoEntity,
 } from './entities/auth.entity';
-import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
-import { Public } from 'src/common/decorators/public.decorator';
+import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')

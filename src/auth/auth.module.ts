@@ -8,8 +8,8 @@ import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { RolesModule } from 'src/roles/roles.module';
-import { PermissionsModule } from 'src/permissions/permissions.module';
+import { RolesModule } from '../roles/roles.module';
+import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
   imports: [
