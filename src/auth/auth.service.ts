@@ -8,9 +8,13 @@ import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { RolesService } from '../roles/roles.service';
+import { PermissionsService } from '../permissions/permissions.service';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
+import { UserInfoEntity } from './entities/auth.entity';
+import { generateMenus } from '../common/utils';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +23,8 @@ export class AuthService {
     @InjectRedis() private readonly redis: Redis,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly rolesService: RolesService,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   private generateKey(ip: string, userAgent: string) {
@@ -96,5 +102,58 @@ export class AuthService {
       'EX',
       +this.configService.get('JWT_EXPIRES_IN') || 86400,
     );
+  }
+
+  async getUserInfo(userId: string) {
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`No user found for userId: ${userId}`);
+    }
+
+    const userInfo: UserInfoEntity = {
+      name: user.nickName ?? user.userName,
+      avatar: user.avatar ?? '',
+      roles: [],
+      permissions: [],
+      menus: [],
+    };
+
+    if (this.usersService.isDefaultAdministrator(user.userName)) {
+      userInfo.permissions = ['*:*:*'];
+    }
+    if (!user.roles.length) {
+      return userInfo;
+    }
+
+    const roles = await this.rolesService.findRolesById(user.roles);
+    if (!roles.length) {
+      return userInfo;
+    }
+    userInfo.roles = roles.map((role) => role.name);
+
+    const tempPermissionIds = roles.reduce((acc, role) => {
+      return acc.concat(role.permissionIds);
+    }, []);
+    if (!tempPermissionIds.length) {
+      return userInfo;
+    }
+
+    const permissionIds = Array.from(new Set(tempPermissionIds));
+    const permissionInfos =
+      await this.permissionsService.findPermissionsById(permissionIds);
+    if (!permissionInfos.length) {
+      return userInfo;
+    }
+
+    if (!userInfo.permissions.includes('*:*:*')) {
+      userInfo.permissions = permissionInfos.map((item) => item.permission);
+    }
+
+    const menus = generateMenus(
+      permissionInfos.filter((item) => item.type !== 'BUTTON'),
+    );
+    userInfo.menus = menus;
+
+    return userInfo;
   }
 }

@@ -1,8 +1,12 @@
-import { Controller, Get, Ip, Headers, Post, Body } from '@nestjs/common';
+import { Controller, Get, Ip, Headers, Post, Body, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
-import { AuthEntity, LoginEntity } from './entities/auth.entity';
+import {
+  AuthEntity,
+  LoginEntity,
+  UserInfoEntity,
+} from './entities/auth.entity';
 import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 
@@ -48,5 +52,16 @@ export class AuthController {
   @Get('logout')
   logout(@Headers('authorization') token: string) {
     return this.authService.logout(token.split(' ')[1]);
+  }
+
+  @ApiOperation({
+    summary: '获取用户权限信息',
+  })
+  @ApiBaseResponse(UserInfoEntity)
+  @Get('userinfo')
+  getUserInfo(
+    @Req() req: { user: { userId: string } },
+  ): Promise<UserInfoEntity> {
+    return this.authService.getUserInfo(req.user.userId);
   }
 }
