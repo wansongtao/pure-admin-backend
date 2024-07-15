@@ -27,6 +27,12 @@ export class AuthService {
     private readonly permissionsService: PermissionsService,
   ) {}
 
+  getDefaultAdminPermission() {
+    const defaultPermission =
+      this.configService.get<string>('DEFAULT_SUPER_PERMISSION') || '*:*:*';
+    return defaultPermission;
+  }
+
   private generateKey(ip: string, userAgent: string) {
     const data = `${ip}:${userAgent}`;
     return createHash('sha256').update(data).digest('hex');
@@ -118,8 +124,9 @@ export class AuthService {
       menus: [],
     };
 
+    const defaultPermission = this.getDefaultAdminPermission();
     if (this.usersService.isDefaultAdministrator(user.userName)) {
-      userInfo.permissions = ['*:*:*'];
+      userInfo.permissions = [defaultPermission];
     }
     if (!user.roles.length) {
       return userInfo;
@@ -145,7 +152,7 @@ export class AuthService {
       return userInfo;
     }
 
-    if (!userInfo.permissions.includes('*:*:*')) {
+    if (!userInfo.permissions.includes(defaultPermission)) {
       userInfo.permissions = permissionInfos.map((item) => item.permission);
     }
 
@@ -155,5 +162,35 @@ export class AuthService {
     userInfo.menus = menus;
 
     return userInfo;
+  }
+
+  async findUserPermissions(userId: string) {
+    const permissions = await this.redis.smembers(`permissions:${userId}`);
+    if (permissions?.length) {
+      return permissions;
+    }
+
+    const user = await this.usersService.findOne(userId);
+    if (!user || !user.roles?.length) {
+      return [];
+    }
+    if (this.usersService.isDefaultAdministrator(user.userName)) {
+      const defaultPermission = this.getDefaultAdminPermission();
+      return [defaultPermission];
+    }
+
+    const userPermissions =
+      await this.permissionsService.findPermissionsByRoleId(user.roles);
+    if (!userPermissions.length) {
+      return [];
+    }
+
+    this.redis.sadd(`permissions:${userId}`, userPermissions);
+    this.redis.expire(
+      `permissions:${userId}`,
+      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+    );
+
+    return userPermissions;
   }
 }
