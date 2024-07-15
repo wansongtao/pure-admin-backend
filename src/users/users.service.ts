@@ -22,7 +22,7 @@ export class UsersService {
     return hash(password, +this.configService.get('BCRYPT_SALT_ROUNDS') || 10);
   }
 
-  private isDefaultAdministrator(userName: string) {
+  isDefaultAdministrator(userName: string) {
     const defaultName = this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
     return userName === defaultName;
   }
