@@ -7,10 +7,7 @@ import {
   Param,
   Delete,
   Query,
-  ParseIntPipe,
-  ParseBoolPipe,
-  ParseEnumPipe,
-  DefaultValuePipe,
+  UsePipes,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,8 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
-import { ParseDatePipe } from '../common/pipe/parse-date.pipe';
-import { ParseStringPipe } from '../common/pipe/parse-string.pipe';
+import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -51,43 +47,14 @@ export class UsersController {
   @ApiQuery({ type: QueryUserDto, required: false })
   @ApiBaseResponse(UserEntity, 'array')
   @Get()
-  findAll(
-    @Query(
-      'page',
-      new DefaultValuePipe(1),
-      new ParseIntPipe({ optional: true }),
-    )
-    page?: QueryUserDto['page'],
-    @Query(
-      'pageSize',
-      new DefaultValuePipe(10),
-      new ParseIntPipe({ optional: true }),
-    )
-    pageSize?: QueryUserDto['pageSize'],
-    @Query('beginTime', new ParseDatePipe({ optional: true }))
-    beginTime?: QueryUserDto['beginTime'],
-    @Query('endTime', new ParseDatePipe({ optional: true }))
-    endTime?: QueryUserDto['endTime'],
-    @Query(
-      'sort',
-      new DefaultValuePipe('desc'),
-      new ParseEnumPipe(['asc', 'desc'], { optional: true }),
-    )
-    sort?: QueryUserDto['sort'],
-    @Query('disabled', new ParseBoolPipe({ optional: true }))
-    disabled?: QueryUserDto['disabled'],
-    @Query('keyword', new ParseStringPipe({ optional: true, maxLength: 50 }))
-    keyword?: QueryUserDto['keyword'],
-  ): Promise<UserEntity[]> {
-    return this.usersService.findAll({
-      page,
-      pageSize,
-      beginTime,
-      endTime,
-      sort,
-      disabled,
-      keyword,
-    });
+  @UsePipes(
+    new ParseQueryPipe<keyof Pick<QueryUserDto, 'disabled' | 'keyword'>>({
+      keyword: { type: 'string', maxLength: 50 },
+      disabled: { type: 'boolean' },
+    }),
+  )
+  findAll(@Query() query: QueryUserDto): Promise<UserEntity[]> {
+    return this.usersService.findAll(query);
   }
 
   @ApiOperation({
