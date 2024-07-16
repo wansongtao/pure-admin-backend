@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { createHash } from 'crypto';
@@ -77,7 +77,7 @@ export class AuthService {
   ) {
     const isCaptchaValid = await this.verifyCaptcha(ip, userAgent, captcha);
     if (!isCaptchaValid) {
-      throw new UnauthorizedException('Captcha is invalid');
+      throw new BadRequestException('Captcha is invalid');
     }
 
     const user = await this.usersService.validateUser(userName);
@@ -87,7 +87,7 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Password is invalid');
+      throw new BadRequestException('Password is invalid');
     }
 
     const payload = { userId: user.id, userName: user.userName };
