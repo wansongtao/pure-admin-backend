@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -15,6 +14,12 @@ import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
 import { UserInfoEntity } from './entities/auth.entity';
 import { generateMenus } from '../common/utils';
+import {
+  getSSOKey,
+  getCaptchaKey,
+  getBlackListKey,
+  getPermissionsKey,
+} from '../common/config/redis.key';
 
 @Injectable()
 export class AuthService {
@@ -33,11 +38,6 @@ export class AuthService {
     return defaultPermission;
   }
 
-  private generateKey(ip: string, userAgent: string) {
-    const data = `${ip}:${userAgent}`;
-    return createHash('sha256').update(data).digest('hex');
-  }
-
   generateCaptcha(ip: string, userAgent: string) {
     const captcha = svgCaptcha.create({
       size: 4,
@@ -46,7 +46,7 @@ export class AuthService {
       background: '#f0f0f0',
     });
 
-    const key = this.generateKey(ip, userAgent);
+    const key = getCaptchaKey(ip, userAgent);
     const expiresIn = +this.configService.get('CAPTCHA_EXPIRES_IN') || 120;
     this.redis.set(key, captcha.text, 'EX', expiresIn);
 
@@ -56,7 +56,7 @@ export class AuthService {
   }
 
   async verifyCaptcha(ip: string, userAgent: string, captcha: string) {
-    const key = this.generateKey(ip, userAgent);
+    const key = getCaptchaKey(ip, userAgent);
     const captchaInRedis = await this.redis.get(key);
     if (
       captchaInRedis &&
@@ -92,8 +92,9 @@ export class AuthService {
 
     const payload = { userId: user.id, userName: user.userName };
     const token = this.jwtService.sign(payload, { algorithm: 'RS256' });
+    const ssoKey = getSSOKey(user.id);
     this.redis.set(
-      `login:${user.id}`,
+      ssoKey,
       token,
       'EX',
       +this.configService.get('JWT_EXPIRES_IN') || 86400,
@@ -102,8 +103,9 @@ export class AuthService {
   }
 
   logout(token: string) {
+    const blackListKey = getBlackListKey(token);
     this.redis.set(
-      token,
+      blackListKey,
       '',
       'EX',
       +this.configService.get('JWT_EXPIRES_IN') || 86400,
@@ -165,7 +167,8 @@ export class AuthService {
   }
 
   async findUserPermissions(userId: string) {
-    const permissions = await this.redis.smembers(`permissions:${userId}`);
+    const permissionsKey = getPermissionsKey(userId);
+    const permissions = await this.redis.smembers(permissionsKey);
     if (permissions?.length) {
       return permissions;
     }
@@ -185,9 +188,9 @@ export class AuthService {
       return [];
     }
 
-    this.redis.sadd(`permissions:${userId}`, userPermissions);
+    this.redis.sadd(permissionsKey, userPermissions);
     this.redis.expire(
-      `permissions:${userId}`,
+      permissionsKey,
       +this.configService.get('JWT_EXPIRES_IN') || 86400,
     );
 

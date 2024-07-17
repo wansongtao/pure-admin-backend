@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../common/decorators/public.decorator';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
+import { getBlackListKey } from '../common/config/redis.key';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -30,7 +31,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     token = token.split(' ')[1];
-    const isBlackListed = await this.redis.exists(token);
+    const blackListKey = getBlackListKey(token);
+    const isBlackListed = await this.redis.exists(blackListKey);
     if (isBlackListed) {
       return false;
     }
