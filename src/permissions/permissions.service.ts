@@ -49,6 +49,7 @@ export class PermissionsService {
         hidden: true,
         cache: true,
         props: true,
+        sort: true,
       },
     });
 
