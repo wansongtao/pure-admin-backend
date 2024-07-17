@@ -24,6 +24,7 @@ class MenuEntity
       | 'deletedAt'
       | 'disabled'
       | 'permission'
+      | 'sort'
     >
 {
   @ApiProperty({ description: '菜单 ID', type: 'number' })
