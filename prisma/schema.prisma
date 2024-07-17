@@ -94,6 +94,7 @@ model Permission {
   icon             String?            @db.VarChar(50)
   path             String?            @db.VarChar(50)
   component        String?            @db.VarChar(150)
+  sort             Int                @default(0) @db.SmallInt
   redirect         String?            @db.VarChar(100)
   disabled         Boolean            @default(false)
   hidden           Boolean            @default(false)
