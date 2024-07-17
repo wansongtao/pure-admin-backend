@@ -7,6 +7,7 @@ import {
   LoginEntity,
   UserInfoEntity,
 } from './entities/auth.entity';
+import { BaseResponseEntity } from '../common/entities/api-response.entity';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
@@ -38,7 +39,7 @@ export class AuthController {
     @Body() { userName, password, captcha }: LoginDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
-  ): Promise<LoginEntity> {
+  ): Promise<LoginEntity | BaseResponseEntity> {
     return this.authService.login(userName, password, captcha, {
       ip,
       userAgent,

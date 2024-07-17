@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -77,17 +73,17 @@ export class AuthService {
   ) {
     const isCaptchaValid = await this.verifyCaptcha(ip, userAgent, captcha);
     if (!isCaptchaValid) {
-      throw new BadRequestException('Captcha is invalid');
+      return { statusCode: 400, message: 'Captcha is invalid' };
     }
 
     const user = await this.usersService.validateUser(userName);
     if (!user) {
-      throw new NotFoundException(`No user found for userName: ${userName}`);
+      return { statusCode: 400, message: 'UserName is invalid' };
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new BadRequestException('Password is invalid');
+      return { statusCode: 400, message: 'Password is invalid' };
     }
 
     const payload = { userId: user.id, userName: user.userName };

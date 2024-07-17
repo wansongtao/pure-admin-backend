@@ -6,7 +6,7 @@ export class BaseResponseEntity<T = null> {
   statusCode: HttpStatus;
 
   @ApiProperty()
-  data: T;
+  data?: T;
 
   @ApiProperty({ default: 'Success' })
   message: string;
