@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
@@ -7,8 +11,88 @@ import { UpdatePermissionDto } from './dto/update-permission.dto';
 export class PermissionsService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(createPermissionDto: CreatePermissionDto) {
-    return 'This action adds a new permission';
+  private async validatePermission(permissionDto: CreatePermissionDto) {
+    if (permissionDto.type === 'MENU' && !permissionDto.component) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The menu component address cannot be empty',
+      };
+    }
+
+    if (permissionDto.type === 'BUTTON' && !permissionDto.permission) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The button permission identifier cannot be empty',
+      };
+    }
+
+    const permission = await this.prismaService.permission.findFirst({
+      where: {
+        OR: [
+          {
+            id: permissionDto.pid,
+          },
+          {
+            name: permissionDto.name,
+          },
+          {
+            permission: permissionDto.permission,
+          },
+        ],
+        deleted: false,
+      },
+      select: {
+        type: true,
+        name: true,
+        permission: true,
+      },
+    });
+
+    if (!permission) {
+      if (permissionDto.pid) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'The parent menu does not exist',
+        };
+      }
+      return;
+    }
+
+    if (permission.name === permissionDto.name) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The menu name already exists',
+      };
+    }
+
+    if (permission.permission === permissionDto.permission) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The permission identifier already exists',
+      };
+    }
+
+    if (permission.type === 'BUTTON') {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The parent menu cannot be a button',
+      };
+    }
+  }
+
+  async create(createPermissionDto: CreatePermissionDto) {
+    const validateResult = await this.validatePermission(createPermissionDto);
+    if (validateResult) {
+      return validateResult;
+    }
+
+    await this.prismaService.permission
+      .create({
+        data: createPermissionDto,
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('Failed to create permission');
+      });
   }
 
   findAll() {
