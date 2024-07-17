@@ -33,10 +33,17 @@ export class ResponseInterceptor<T>
         }
 
         const result: BaseResponseEntity<T> = {
-          statusCode: data?.statusCode ?? response.statusCode,
-          data: data ?? null,
-          message: data?.message ?? 'Success',
+          statusCode: 200,
+          data,
+          message: 'Success',
         };
+
+        if (data.statusCode || data.message) {
+          result.statusCode = data.statusCode ?? 200;
+          result.message = data.message ?? 'Success';
+          result.data = data.data ?? null;
+        }
+
         return result;
       }),
     );
