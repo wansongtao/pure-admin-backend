@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'nestjs-prisma';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { generateMenus } from '../common/utils/index';
 
 @Injectable()
 export class PermissionsService {
@@ -179,5 +180,29 @@ export class PermissionsService {
     });
 
     return permission.map((item) => item.permission);
+  }
+
+  async fineTree() {
+    const permissions = await this.prismaService.permission.findMany({
+      where: {
+        disabled: false,
+        deleted: false,
+        type: {
+          not: 'BUTTON',
+        },
+      },
+      select: {
+        id: true,
+        pid: true,
+        name: true,
+        type: true,
+      },
+      orderBy: {
+        sort: 'desc',
+      },
+    });
+
+    const tree = generateMenus(permissions);
+    return tree;
   }
 }
