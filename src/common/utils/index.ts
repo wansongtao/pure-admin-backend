@@ -1,6 +1,4 @@
-export const generateMenus = <
-  T extends { id: number; pid: number | null; sort: number },
->(
+export const generateMenus = <T extends { id: number; pid: number | null }>(
   permissions: T[],
 ) => {
   const permissionMap = new Map<number, T & { children?: T[] }>();
@@ -13,7 +11,6 @@ export const generateMenus = <
   permissions.forEach((permission) => {
     if (!permission.pid) {
       menus.push(permission);
-      menus.sort((a, b) => a.sort - b.sort);
       return;
     }
 
@@ -24,7 +21,6 @@ export const generateMenus = <
 
     if (parent.children) {
       parent.children.push(permission);
-      parent.children.sort((a, b) => a.sort - b.sort);
       return;
     }
 

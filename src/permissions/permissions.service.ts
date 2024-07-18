@@ -149,6 +149,9 @@ export class PermissionsService {
         props: true,
         sort: true,
       },
+      orderBy: {
+        sort: 'desc',
+      },
     });
 
     return permissionInfos;
