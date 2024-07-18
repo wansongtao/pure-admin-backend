@@ -87,7 +87,6 @@ enum MenuType {
 
 model Permission {
   id               Int                @id @default(autoincrement()) @db.SmallInt
-  pid              Int                @default(0) @db.SmallInt
   type             MenuType           @default(MENU)
   name             String             @unique @db.VarChar(50)
   permission       String?            @unique @db.VarChar(50)
@@ -103,6 +102,9 @@ model Permission {
   deleted          Boolean            @default(false)
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
+  pid              Int?               @db.SmallInt
+  parent           Permission?        @relation("ParentToChildren", fields: [pid], references: [id])
+  children         Permission[]       @relation("ParentToChildren")
   roleInPermission RoleInPermission[]
 
   @@map("permissions")
