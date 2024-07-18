@@ -1,6 +1,6 @@
 import { Controller, Get, Ip, Headers, Post, Body, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
 import {
   AuthEntity,
@@ -49,6 +49,7 @@ export class AuthController {
   @ApiOperation({
     summary: '用户登出',
   })
+  @ApiBearerAuth()
   @ApiBaseResponse()
   @Get('logout')
   logout(@Headers('authorization') token: string) {
@@ -58,6 +59,7 @@ export class AuthController {
   @ApiOperation({
     summary: '获取用户权限信息',
   })
+  @ApiBearerAuth()
   @ApiBaseResponse(UserInfoEntity)
   @Get('userinfo')
   getUserInfo(
