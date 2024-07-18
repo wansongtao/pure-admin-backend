@@ -12,6 +12,13 @@ export class PermissionsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   private async validatePermission(permissionDto: CreatePermissionDto) {
+    if (permissionDto.type !== 'BUTTON' && !permissionDto.path) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The menu path cannot be empty',
+      };
+    }
+
     if (permissionDto.type === 'MENU' && !permissionDto.component) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -76,6 +83,13 @@ export class PermissionsService {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'The parent menu cannot be a button',
+      };
+    }
+
+    if (permission.type === 'MENU' && permissionDto.type !== 'BUTTON') {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Only buttons can be added under the menu',
       };
     }
   }

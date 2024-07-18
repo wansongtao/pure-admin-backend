@@ -11,6 +11,7 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 
 export class CreatePermissionDto
@@ -22,7 +23,7 @@ export class CreatePermissionDto
   @ApiProperty({
     description: '父级菜单ID',
     type: 'number',
-    default: 0,
+    default: null,
     required: false,
   })
   pid?: Permission['pid'];
@@ -50,12 +51,20 @@ export class CreatePermissionDto
   @ApiProperty({ description: '菜单图标', type: 'string', required: false })
   icon?: Permission['icon'];
 
-  @Matches(/^[a-z/:0-9-_]{2,30}$/, { message: '菜单路径格式错误' })
+  @MinLength(2, { message: '菜单路径长度不能小于2' })
+  @MaxLength(50, { message: '菜单路径长度不能超过50' })
+  @Matches(/^\/?([a-zA-Z]+)(\/[a-zA-Z]+|\/:[a-zA-Z]+)*$/, {
+    message: '菜单路径格式错误',
+  })
   @IsOptional()
   @ApiProperty({ description: '菜单路径', type: 'string', required: false })
   path?: Permission['path'];
 
-  @Matches(/^\/[a-zA-Z/.]{6,100}$/, { message: '菜单组件地址格式错误' })
+  @MinLength(6, { message: '菜单组件地址长度不能小于6' })
+  @MaxLength(100, { message: '菜单组件地址长度不能超过100' })
+  @Matches(/^(\/[a-zA-Z]+[-_]?[a-zA-Z]+)+(.vue|.tsx|.jsx)$/, {
+    message: '菜单组件地址格式错误',
+  })
   @IsOptional()
   @ApiProperty({ description: '菜单组件地址', type: 'string', required: false })
   component?: Permission['component'];
@@ -72,7 +81,9 @@ export class CreatePermissionDto
   })
   sort?: Permission['sort'];
 
-  @Matches(/^[a-z/:0-9-_]{2,50}$/, { message: '菜单重定向地址格式错误' })
+  @MinLength(2, { message: '菜单重定向地址长度不能小于2' })
+  @MaxLength(50, { message: '菜单重定向地址长度不能超过50' })
+  @Matches(/^(\/?[a-zA-Z0-9]+)+$/, { message: '菜单重定向地址格式错误' })
   @IsOptional()
   @ApiProperty({
     description: '菜单重定向地址',
@@ -111,10 +122,10 @@ export class CreatePermissionDto
   })
   cache?: Permission['cache'];
 
-  @IsBoolean({ message: 'router的props属性必须为布尔值' })
+  @IsBoolean({ message: 'vue-router的props属性必须为布尔值' })
   @IsOptional()
   @ApiProperty({
-    description: 'router的props属性',
+    description: 'vue-router的props属性',
     type: 'boolean',
     required: false,
     default: false,
