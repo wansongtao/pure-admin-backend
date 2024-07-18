@@ -1,5 +1,5 @@
 export const generateMenus = <
-  T extends { id: number; pid: number; sort: number },
+  T extends { id: number; pid: number | null; sort: number },
 >(
   permissions: T[],
 ) => {
@@ -11,7 +11,7 @@ export const generateMenus = <
   });
 
   permissions.forEach((permission) => {
-    if (permission.pid === 0) {
+    if (!permission.pid) {
       menus.push(permission);
       menus.sort((a, b) => a.sort - b.sort);
       return;
