@@ -15,6 +15,7 @@ interface Options {
   maxLength?: number;
   min?: number;
   max?: number;
+  regexp?: RegExp;
 }
 type ParseQueryPipeOptions<T extends string> = Record<T, Options>;
 
@@ -80,6 +81,9 @@ export class ParseQueryPipe<T extends string> implements PipeTransform {
               `${key} length must be less than ${option.maxLength}`,
             ),
           ];
+        }
+        if (option.regexp && !option.regexp.test(value)) {
+          return [new BadRequestException(`${key} is invalid`)];
         }
         return [undefined, value];
       },
