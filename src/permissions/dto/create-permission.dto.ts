@@ -28,7 +28,7 @@ export class CreatePermissionDto
   })
   pid?: Permission['pid'];
 
-  @Matches(/^[a-zA-Z\u4e00-\u9fa5]{2,16}$/, { message: '菜单名称格式错误' })
+  @Matches(/^[a-zA-Z\u4e00-\u9fa5]{1,50}$/, { message: '菜单名称格式错误' })
   @IsNotEmpty({ message: '菜单名称不能为空' })
   @ApiProperty({ description: '菜单名称', type: 'string' })
   name: Permission['name'];

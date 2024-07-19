@@ -4,9 +4,11 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
+import { generateMenus } from '../common/utils/index';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
-import { generateMenus } from '../common/utils/index';
+import { QueryPermissionDto } from './dto/query-permission.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PermissionsService {
@@ -110,8 +112,67 @@ export class PermissionsService {
       });
   }
 
-  findAll() {
-    return `This action returns all permissions`;
+  async findAll(query: QueryPermissionDto) {
+    const {
+      keyword,
+      disabled,
+      type,
+      page,
+      pageSize,
+      sort,
+      beginTime,
+      endTime,
+    } = query;
+
+    const whereCondition: Prisma.PermissionWhereInput = {
+      deleted: false,
+      name: {
+        contains: keyword,
+        mode: 'insensitive',
+      },
+      disabled,
+      type,
+      createdAt: {
+        gte: beginTime,
+        lte: endTime,
+      },
+    };
+
+    const permissions = await this.prismaService.permission.findMany({
+      where: whereCondition,
+      select: {
+        id: true,
+        pid: true,
+        name: true,
+        type: true,
+        permission: true,
+        icon: true,
+        path: true,
+        sort: true,
+        disabled: true,
+        createdAt: true,
+      },
+      orderBy: [
+        {
+          sort: 'desc',
+        },
+        {
+          createdAt: sort,
+        },
+      ],
+    });
+
+    const offset = (page - 1) * pageSize;
+    if (permissions.length < offset) {
+      return { list: [], total: 0 };
+    }
+
+    const permissionTree = generateMenus(permissions);
+    if (permissionTree.length < offset) {
+      return { list: [], total: 0 };
+    }
+    const list = permissionTree.splice(offset, pageSize);
+    return { list, total: list.length };
   }
 
   findOne(id: number) {

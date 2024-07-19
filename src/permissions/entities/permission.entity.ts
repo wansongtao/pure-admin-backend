@@ -1,5 +1,5 @@
 import { Permission } from '@prisma/client';
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
 
 export class PermissionEntity
   implements Omit<Permission, 'deleted' | 'updatedAt'>
@@ -23,7 +23,7 @@ export class PermissionEntity
   type: Permission['type'];
 
   @ApiProperty({ description: '权限标识', type: 'string' })
-  permission: Permission['permission'] | undefined;
+  permission: Permission['permission'];
 
   @ApiProperty({ description: '组件路径', type: 'string' })
   component: Permission['component'];
@@ -37,27 +37,24 @@ export class PermissionEntity
   @ApiProperty({ description: '重定向地址', type: 'string' })
   redirect: string;
 
-  @ApiProperty({ description: '是否隐藏', type: 'boolean' })
+  @ApiProperty({ description: '是否隐藏', type: 'boolean', default: false })
   hidden: Permission['hidden'];
 
-  @ApiProperty({ description: '是否缓存', type: 'boolean' })
+  @ApiProperty({ description: '是否缓存', type: 'boolean', default: false })
   cache: boolean;
 
-  @ApiProperty({ description: '是否禁用', type: 'boolean' })
+  @ApiProperty({ description: '是否禁用', type: 'boolean', default: false })
   disabled: boolean;
 
-  @ApiProperty({ description: 'vue-router的props属性', type: 'boolean' })
+  @ApiProperty({
+    description: 'vue-router的props属性',
+    type: 'boolean',
+    default: false,
+  })
   props: boolean;
 
-  @ApiProperty({ description: '创建时间', type: 'string' })
+  @ApiProperty({ description: '创建时间(UTC)', type: 'string' })
   createdAt: Permission['createdAt'];
-
-  @ApiProperty({
-    description: '子菜单',
-    required: false,
-    default: [],
-  })
-  children?: PermissionEntity[];
 }
 
 export class PermissionTreeEntity extends PickType(PermissionEntity, [
@@ -70,6 +67,31 @@ export class PermissionTreeEntity extends PickType(PermissionEntity, [
     description: '子菜单',
     required: false,
     default: [],
+    type: [PermissionTreeEntity],
   })
   children?: PermissionTreeEntity[];
+}
+
+export class PermissionList extends OmitType(PermissionEntity, [
+  'redirect',
+  'hidden',
+  'cache',
+  'props',
+  'component',
+] as const) {
+  @ApiProperty({
+    description: '子菜单',
+    required: false,
+    default: [],
+    type: [PermissionList],
+  })
+  children?: PermissionList[];
+}
+
+export class PermissionListEntity {
+  @ApiProperty({ description: '总数', type: 'number' })
+  total: number;
+
+  @ApiProperty({ description: '菜单列表', type: [PermissionList] })
+  list: PermissionList[];
 }

@@ -6,14 +6,21 @@ import {
   Patch,
   Param,
   Delete,
+  UsePipes,
+  Query,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
-import { CreatePermissionDto } from './dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permissions } from '../common/decorators/permission.decorator';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
-import { PermissionTreeEntity } from './entities/permission.entity';
+import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
+import {
+  PermissionTreeEntity,
+  PermissionListEntity,
+} from './entities/permission.entity';
+import { QueryPermissionDto } from './dto/query-permission.dto';
+import { CreatePermissionDto } from './dto/create-permission.dto';
+import { UpdatePermissionDto } from './dto/update-permission.dto';
 
 @ApiTags('permissions')
 @ApiBearerAuth()
@@ -36,9 +43,24 @@ export class PermissionsController {
     return this.permissionsService.fineTree();
   }
 
+  @ApiOperation({ summary: '获取权限列表' })
+  @ApiBaseResponse(PermissionListEntity)
   @Get()
-  findAll() {
-    return this.permissionsService.findAll();
+  @UsePipes(
+    new ParseQueryPipe<
+      keyof Pick<QueryPermissionDto, 'disabled' | 'keyword' | 'type'>
+    >({
+      keyword: {
+        type: 'string',
+        maxLength: 50,
+        regexp: /^[a-zA-Z\u4e00-\u9fa5]*$/,
+      },
+      disabled: { type: 'boolean' },
+      type: { type: 'enum', enum: ['DIRECTORY', 'MENU', 'BUTTON'] },
+    }),
+  )
+  findAll(@Query() query: QueryPermissionDto): Promise<PermissionListEntity> {
+    return this.permissionsService.findAll(query);
   }
 
   @Get(':id')
