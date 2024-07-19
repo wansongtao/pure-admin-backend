@@ -9,7 +9,7 @@ import { BaseQueryDto } from '../dto/base-query.dto';
 interface Options {
   type: 'number' | 'date' | 'string' | 'enum' | 'boolean';
   enum?: any[];
-  default?: string | number | boolean | Date;
+  default?: string | number | boolean;
   required?: boolean;
   minLength?: number;
   maxLength?: number;
@@ -114,7 +114,7 @@ export class ParseQueryPipe<T extends string> implements PipeTransform {
             new BadRequestException(`${key} must be a valid date string`),
           ];
         }
-        return [undefined, new Date(d)];
+        return [undefined, new Date(d).toISOString()];
       },
     };
 

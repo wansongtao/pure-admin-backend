@@ -7,11 +7,11 @@ export class BaseQueryDto {
   @ApiProperty({ required: false, default: 10 })
   pageSize: number;
 
-  @ApiProperty({ required: false, description: '请传入 UTC 时间' })
-  beginTime?: Date;
+  @ApiProperty({ required: false })
+  beginTime?: string;
 
-  @ApiProperty({ required: false, description: '请传入 UTC 时间' })
-  endTime?: Date;
+  @ApiProperty({ required: false })
+  endTime?: string;
 
   @ApiProperty({
     required: false,
