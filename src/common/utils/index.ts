@@ -16,6 +16,7 @@ export const generateMenus = <T extends { id: number; pid: number | null }>(
 
     const parent = permissionMap.get(permission.pid);
     if (!parent) {
+      menus.push(permission);
       return;
     }
 
