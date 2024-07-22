@@ -24,7 +24,7 @@
     "prisma:generate": "npx prisma generate",
     "prisma:studio": "npx prisma studio",
     "prisma:seed": "dotenv -e .env.development -- npx prisma db seed",
-    "prisma:docs": "npx http-server ./prisma/docs"
+    "prisma:docs": "npx http-server ./prisma/docs/ -p 5555"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
