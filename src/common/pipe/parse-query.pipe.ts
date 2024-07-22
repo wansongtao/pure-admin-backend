@@ -108,13 +108,23 @@ export class ParseQueryPipe<T extends string> implements PipeTransform {
         return [undefined, value === 'true' || value === '1'];
       },
       date: () => {
+        const regexp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+        if (!regexp.test(value)) {
+          return [
+            new BadRequestException(
+              'date format must be "YYYY-MM-DDTHH:mm:ss.SSSZ',
+            ),
+          ];
+        }
+
         const d = Date.parse(value);
         if (isNaN(d)) {
           return [
             new BadRequestException(`${key} must be a valid date string`),
           ];
         }
-        return [undefined, new Date(d).toISOString()];
+
+        return [undefined, value];
       },
     };
 
