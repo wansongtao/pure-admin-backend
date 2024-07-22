@@ -8,6 +8,7 @@ import {
   Delete,
   UsePipes,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -17,6 +18,7 @@ import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
 import {
   PermissionTreeEntity,
   PermissionListEntity,
+  PermissionEntity,
 } from './entities/permission.entity';
 import { QueryPermissionDto } from './dto/query-permission.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
@@ -63,9 +65,11 @@ export class PermissionsController {
     return this.permissionsService.findAll(query);
   }
 
+  @ApiOperation({ summary: '获取单个权限详情' })
+  @ApiBaseResponse(PermissionEntity)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.permissionsService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.permissionsService.findOne(id);
   }
 
   @Patch(':id')

@@ -176,7 +176,27 @@ export class PermissionsService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} permission`;
+    return this.prismaService.permission.findUnique({
+      where: {
+        id,
+        deleted: false,
+      },
+      select: {
+        pid: true,
+        name: true,
+        type: true,
+        path: true,
+        permission: true,
+        icon: true,
+        cache: true,
+        props: true,
+        hidden: true,
+        component: true,
+        disabled: true,
+        redirect: true,
+        sort: true,
+      },
+    });
   }
 
   update(id: number, updatePermissionDto: UpdatePermissionDto) {
