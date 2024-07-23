@@ -305,6 +305,11 @@ export class PermissionsService {
       },
       select: {
         id: true,
+        children: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
@@ -312,6 +317,13 @@ export class PermissionsService {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Permission does not exist',
+      };
+    }
+
+    if (permission.children.length > 0) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The menu has submenus and cannot be deleted',
       };
     }
 
@@ -336,12 +348,26 @@ export class PermissionsService {
       },
       select: {
         id: true,
+        children: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
+
     if (permissions.length !== ids.length) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Some permissions do not exist',
+      };
+    }
+
+    const hasChildren = permissions.some((item) => item.children.length > 0);
+    if (hasChildren) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Some menus have submenus and cannot be deleted',
       };
     }
 
