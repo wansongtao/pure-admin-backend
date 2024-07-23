@@ -171,8 +171,9 @@ export class PermissionsService {
     if (permissionTree.length < offset) {
       return { list: [], total: 0 };
     }
-    const list = permissionTree.splice(offset, pageSize);
-    return { list, total: list.length };
+    const total = permissionTree.length;
+    const list = permissionTree.slice(offset, offset + pageSize);
+    return { list, total };
   }
 
   findOne(id: number) {
