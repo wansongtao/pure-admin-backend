@@ -72,12 +72,14 @@ export class PermissionsController {
     return this.permissionsService.findOne(id);
   }
 
+  @ApiOperation({ summary: '更新权限' })
+  @ApiBaseResponse()
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updatePermissionDto: UpdatePermissionDto,
   ) {
-    return this.permissionsService.update(+id, updatePermissionDto);
+    return this.permissionsService.update(id, updatePermissionDto);
   }
 
   @Delete(':id')

@@ -12,6 +12,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreatePermissionDto
@@ -19,6 +20,7 @@ export class CreatePermissionDto
     Partial<Omit<Permission, 'id' | 'deleted' | 'createdAt' | 'updatedAt'>>
 {
   @IsNumber({}, { message: '父菜单ID必须为数字' })
+  @ValidateIf((o) => o.pid !== undefined)
   @IsOptional()
   @ApiProperty({
     description: '父级菜单ID',
@@ -41,12 +43,14 @@ export class CreatePermissionDto
   type: Permission['type'];
 
   @Matches(/^[a-z:]{1,50}$/, { message: '权限标识格式错误' })
+  @ValidateIf((o) => o.permission !== '')
   @IsOptional()
   @ApiProperty({ description: '权限标识', type: 'string', required: false })
   permission?: Permission['permission'];
 
   @MaxLength(50, { message: '菜单图标长度不能超过50' })
   @IsString({ message: '菜单图标必须为字符串' })
+  @ValidateIf((o) => o.icon !== '')
   @IsOptional()
   @ApiProperty({ description: '菜单图标', type: 'string', required: false })
   icon?: Permission['icon'];
@@ -65,6 +69,7 @@ export class CreatePermissionDto
   @Matches(/^(\/[a-zA-Z]+[-_]?[a-zA-Z]+)+(.vue|.tsx|.jsx)$/, {
     message: '菜单组件地址格式错误',
   })
+  @ValidateIf((o) => o.component !== '')
   @IsOptional()
   @ApiProperty({ description: '菜单组件地址', type: 'string', required: false })
   component?: Permission['component'];
@@ -84,6 +89,7 @@ export class CreatePermissionDto
   @MinLength(2, { message: '菜单重定向地址长度不能小于2' })
   @MaxLength(50, { message: '菜单重定向地址长度不能超过50' })
   @Matches(/^(\/?[a-zA-Z0-9]+)+$/, { message: '菜单重定向地址格式错误' })
+  @ValidateIf((o) => o.redirect !== '')
   @IsOptional()
   @ApiProperty({
     description: '菜单重定向地址',

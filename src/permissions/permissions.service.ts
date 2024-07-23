@@ -199,8 +199,101 @@ export class PermissionsService {
     });
   }
 
-  update(id: number, updatePermissionDto: UpdatePermissionDto) {
-    return `This action updates a #${id} permission`;
+  async update(id: number, updatePermissionDto: UpdatePermissionDto) {
+    const permission = await this.prismaService.permission.findUnique({
+      where: {
+        id,
+        deleted: false,
+      },
+    });
+
+    if (!permission) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Permission does not exist',
+      };
+    }
+    if (permission.id === updatePermissionDto.pid) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The parent menu cannot be itself',
+      };
+    }
+
+    if (
+      updatePermissionDto.name ||
+      updatePermissionDto.permission ||
+      updatePermissionDto.pid
+    ) {
+      const otherPermission = await this.prismaService.permission.findFirst({
+        where: {
+          id: {
+            not: id,
+          },
+          OR: [
+            {
+              id: updatePermissionDto.pid,
+            },
+            {
+              name: updatePermissionDto.name,
+            },
+            {
+              permission: updatePermissionDto.permission,
+            },
+          ],
+        },
+        select: {
+          type: true,
+          name: true,
+          permission: true,
+        },
+      });
+
+      if (otherPermission) {
+        if (otherPermission.name === updatePermissionDto.name) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'The menu name already exists',
+          };
+        }
+
+        if (otherPermission.permission === updatePermissionDto.permission) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'The permission identifier already exists',
+          };
+        }
+
+        if (otherPermission.type === 'BUTTON') {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'The parent menu cannot be a button',
+          };
+        }
+
+        if (otherPermission.type === 'MENU' && permission.type !== 'BUTTON') {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Only buttons can be added under the menu',
+          };
+        }
+      }
+    }
+
+    if (updatePermissionDto.sort === null) {
+      updatePermissionDto.sort = 0;
+    }
+
+    await this.prismaService.permission
+      .update({
+        where: {
+          id,
+        },
+        data: updatePermissionDto,
+      })
+      .catch(() => {
+        throw new InternalServerErrorException('Failed to update permission');
+      });
   }
 
   remove(id: number) {
