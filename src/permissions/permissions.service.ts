@@ -97,6 +97,15 @@ export class PermissionsService {
     }
   }
 
+  private isDefaultPermission(name: string) {
+    return (
+      name === '系统管理' ||
+      name === '用户管理' ||
+      name === '角色管理' ||
+      name === '菜单管理'
+    );
+  }
+
   async create(createPermissionDto: CreatePermissionDto) {
     const validateResult = await this.validatePermission(createPermissionDto);
     if (validateResult) {
@@ -214,6 +223,12 @@ export class PermissionsService {
         message: 'Permission does not exist',
       };
     }
+    if (this.isDefaultPermission(permission.name)) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default menu cannot be modified',
+      };
+    }
     if (permission.id === updatePermissionDto.pid) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -305,6 +320,7 @@ export class PermissionsService {
       },
       select: {
         id: true,
+        name: true,
         children: {
           select: {
             id: true,
@@ -317,6 +333,13 @@ export class PermissionsService {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Permission does not exist',
+      };
+    }
+
+    if (this.isDefaultPermission(permission.name)) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default menu cannot be deleted',
       };
     }
 
@@ -348,6 +371,7 @@ export class PermissionsService {
       },
       select: {
         id: true,
+        name: true,
         children: {
           select: {
             id: true,
@@ -360,6 +384,16 @@ export class PermissionsService {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Some permissions do not exist',
+      };
+    }
+
+    const hasDefaultPermission = permissions.some((item) => {
+      return this.isDefaultPermission(item.name);
+    });
+    if (hasDefaultPermission) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default menu cannot be deleted',
       };
     }
 
