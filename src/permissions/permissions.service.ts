@@ -326,6 +326,38 @@ export class PermissionsService {
     });
   }
 
+  async batchRemove(ids: number[]) {
+    const permissions = await this.prismaService.permission.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        deleted: false,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (permissions.length !== ids.length) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Some permissions do not exist',
+      };
+    }
+
+    await this.prismaService.permission.updateMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        deleted: false,
+      },
+      data: {
+        deleted: true,
+      },
+    });
+  }
+
   async findPermissionsById(ids: number[]) {
     const permissionInfos = await this.prismaService.permission.findMany({
       where: {

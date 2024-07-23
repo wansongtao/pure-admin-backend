@@ -23,6 +23,7 @@ import {
 import { QueryPermissionDto } from './dto/query-permission.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { DeletePermissionDto } from './dto/delete-permission.dto';
 
 @ApiTags('permissions')
 @ApiBearerAuth()
@@ -89,5 +90,13 @@ export class PermissionsController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.permissionsService.remove(id);
+  }
+
+  @ApiOperation({ summary: '批量删除权限' })
+  @ApiBaseResponse()
+  @Permissions('system:menu:del')
+  @Post('batch-delete')
+  batchRemove(@Body() deletePermissionDto: DeletePermissionDto) {
+    return this.permissionsService.batchRemove(deletePermissionDto.ids);
   }
 }
