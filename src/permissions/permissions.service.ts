@@ -297,8 +297,33 @@ export class PermissionsService {
       });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} permission`;
+  async remove(id: number) {
+    const permission = await this.prismaService.permission.findUnique({
+      where: {
+        id,
+        deleted: false,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!permission) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Permission does not exist',
+      };
+    }
+
+    await this.prismaService.permission.update({
+      where: {
+        id,
+        deleted: false,
+      },
+      data: {
+        deleted: true,
+      },
+    });
   }
 
   async findPermissionsById(ids: number[]) {

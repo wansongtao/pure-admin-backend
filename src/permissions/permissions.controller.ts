@@ -74,6 +74,7 @@ export class PermissionsController {
 
   @ApiOperation({ summary: '更新权限' })
   @ApiBaseResponse()
+  @Permissions('system:menu:edit')
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -82,8 +83,11 @@ export class PermissionsController {
     return this.permissionsService.update(id, updatePermissionDto);
   }
 
+  @ApiOperation({ summary: '删除权限' })
+  @ApiBaseResponse()
+  @Permissions('system:menu:del')
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.permissionsService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.permissionsService.remove(id);
   }
 }
