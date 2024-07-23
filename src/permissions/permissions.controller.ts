@@ -41,8 +41,8 @@ export class PermissionsController {
   @ApiOperation({ summary: '获取权限树' })
   @ApiBaseResponse(PermissionTreeEntity, 'array')
   @Get('tree')
-  fineTree(): Promise<PermissionTreeEntity[]> {
-    return this.permissionsService.fineTree();
+  findTree(): Promise<PermissionTreeEntity[]> {
+    return this.permissionsService.findTree();
   }
 
   @ApiOperation({ summary: '获取权限列表' })

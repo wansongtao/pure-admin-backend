@@ -357,7 +357,7 @@ export class PermissionsService {
     return permission.map((item) => item.permission);
   }
 
-  async fineTree() {
+  async findTree() {
     const permissions = await this.prismaService.permission.findMany({
       where: {
         disabled: false,
