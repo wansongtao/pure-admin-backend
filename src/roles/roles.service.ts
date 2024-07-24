@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
+import { ConfigService } from '@nestjs/config';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { QueryRoleDto } from './dto/query-role.dto';
@@ -7,7 +8,16 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private isDefaultAdministrator(roleName: string) {
+    const defaultName =
+      this.configService.get<string>('DEFAULT_ROLE_NAME') || 'admin';
+    return roleName === defaultName;
+  }
 
   async create(createRoleDto: CreateRoleDto) {
     const role = await this.prismaService.role.findFirst({
@@ -30,7 +40,7 @@ export class RolesService {
       description: createRoleDto.description,
       disabled: createRoleDto.disabled,
     };
-    if (createRoleDto.permissions) {
+    if (createRoleDto.permissions?.length) {
       data.roleInPermission = {
         create: createRoleDto.permissions.map((permissionId) => ({
           permissionId,
@@ -115,8 +125,48 @@ export class RolesService {
     };
   }
 
-  update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`;
+  async update(id: number, updateRoleDto: UpdateRoleDto) {
+    const role = await this.prismaService.role.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    if (this.isDefaultAdministrator(role.name)) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default administrator role cannot be modified',
+      };
+    }
+
+    const data: Prisma.RoleUpdateInput = {
+      name: updateRoleDto.name,
+      description: updateRoleDto.description,
+      disabled: updateRoleDto.disabled,
+    };
+    if (updateRoleDto.permissions) {
+      data.roleInPermission = {
+        deleteMany: {},
+      };
+
+      if (updateRoleDto.permissions.length) {
+        data.roleInPermission.create = updateRoleDto.permissions.map(
+          (permissionId) => ({
+            permissionId,
+          }),
+        );
+      }
+    }
+
+    await this.prismaService.role.update({
+      where: {
+        id,
+      },
+      data,
+    });
   }
 
   remove(id: number) {
