@@ -1,5 +1,5 @@
 import { Role } from '@prisma/client';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 export class RoleEntity implements Omit<Role, 'deleted'> {
   @ApiProperty({ description: '角色ID', type: 'number' })
@@ -27,4 +27,12 @@ export class RoleListEntity {
 
   @ApiProperty({ description: '角色列表', type: [RoleEntity] })
   list: RoleEntity[];
+}
+
+export class RoleDetailEntity extends OmitType(RoleEntity, [
+  'createdAt',
+  'updatedAt',
+]) {
+  @ApiProperty({ description: '权限列表', type: 'number', isArray: true })
+  permissions: number[];
 }

@@ -8,13 +8,14 @@ import {
   Delete,
   UsePipes,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { QueryRoleDto } from './dto/query-role.dto';
-import { RoleListEntity } from './entities/role.entity';
+import { RoleListEntity, RoleDetailEntity } from './entities/role.entity';
 import { ApiBaseResponse } from 'src/common/decorators/api-response.decorator';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -48,9 +49,11 @@ export class RolesController {
     return this.rolesService.findAll(query);
   }
 
+  @ApiOperation({ summary: '获取角色详情' })
+  @ApiBaseResponse(RoleDetailEntity)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.rolesService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<RoleDetailEntity> {
+    return this.rolesService.findOne(id);
   }
 
   @Patch(':id')

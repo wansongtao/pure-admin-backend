@@ -83,8 +83,36 @@ export class RolesService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
+  async findOne(id: number) {
+    const role = await this.prismaService.role.findUnique({
+      where: {
+        id,
+        deleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        disabled: true,
+        roleInPermission: {
+          select: {
+            permissionId: true,
+          },
+        },
+      },
+    });
+
+    const permissions = role.roleInPermission.map(
+      (roleInPermission) => roleInPermission.permissionId,
+    );
+
+    return {
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      disabled: role.disabled,
+      permissions,
+    };
   }
 
   update(id: number, updateRoleDto: UpdateRoleDto) {
