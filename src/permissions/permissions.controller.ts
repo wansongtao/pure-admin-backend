@@ -9,6 +9,8 @@ import {
   UsePipes,
   Query,
   ParseIntPipe,
+  ParseBoolPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -42,8 +44,11 @@ export class PermissionsController {
   @ApiOperation({ summary: '获取权限树' })
   @ApiBaseResponse(PermissionTreeEntity, 'array')
   @Get('tree')
-  findTree(): Promise<PermissionTreeEntity[]> {
-    return this.permissionsService.findTree();
+  findTree(
+    @Query('containButton', new DefaultValuePipe(false), ParseBoolPipe)
+    containButton: boolean,
+  ): Promise<PermissionTreeEntity[]> {
+    return this.permissionsService.findTree(containButton);
   }
 
   @ApiOperation({ summary: '获取权限列表' })

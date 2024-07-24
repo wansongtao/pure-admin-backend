@@ -474,15 +474,19 @@ export class PermissionsService {
     return permission.map((item) => item.permission);
   }
 
-  async findTree() {
+  async findTree(containButton: boolean) {
+    const whereCondition: Prisma.PermissionWhereInput = {
+      disabled: false,
+      deleted: false,
+    };
+    if (!containButton) {
+      whereCondition.type = {
+        not: 'BUTTON',
+      };
+    }
+
     const permissions = await this.prismaService.permission.findMany({
-      where: {
-        disabled: false,
-        deleted: false,
-        type: {
-          not: 'BUTTON',
-        },
-      },
+      where: whereCondition,
       select: {
         id: true,
         pid: true,
