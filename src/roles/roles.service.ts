@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -9,8 +9,38 @@ import { Prisma } from '@prisma/client';
 export class RolesService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
+  async create(createRoleDto: CreateRoleDto) {
+    const role = await this.prismaService.role.findFirst({
+      where: {
+        name: createRoleDto.name,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (role) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The name already exists',
+      };
+    }
+
+    const data: Prisma.RoleCreateInput = {
+      name: createRoleDto.name,
+      description: createRoleDto.description,
+      disabled: createRoleDto.disabled,
+    };
+    if (createRoleDto.permissions) {
+      data.roleInPermission = {
+        create: createRoleDto.permissions.map((permissionId) => ({
+          permissionId,
+        })),
+      };
+    }
+
+    await this.prismaService.role.create({
+      data,
+    });
   }
 
   async findAll(queryRoleDto: QueryRoleDto) {
