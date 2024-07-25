@@ -17,7 +17,7 @@ export class NullResponseEntity implements BaseResponseEntity<string> {
   statusCode: HttpStatus;
 
   @ApiProperty({ default: null })
-  data: string;
+  data?: string;
 
   @ApiProperty({ default: 'Success' })
   message: string;
