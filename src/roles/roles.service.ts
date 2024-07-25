@@ -1,10 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { QueryRoleDto } from './dto/query-role.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RolesService {
@@ -111,6 +111,13 @@ export class RolesService {
         },
       },
     });
+
+    if (!role) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Role not found',
+      };
+    }
 
     const permissions = role.roleInPermission.map(
       (roleInPermission) => roleInPermission.permissionId,
