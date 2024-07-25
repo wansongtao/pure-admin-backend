@@ -1,6 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
+import { getPermissionsKey } from '../common/config/redis.key';
 import { Prisma } from '@prisma/client';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -11,12 +14,22 @@ export class RolesService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   private isDefaultAdministrator(roleName: string) {
     const defaultName =
       this.configService.get<string>('DEFAULT_ROLE_NAME') || 'admin';
     return roleName === defaultName;
+  }
+
+  private clearPermissionsCache(userIds: string[]) {
+    userIds.forEach((userId) => {
+      const key = getPermissionsKey(userId);
+      if (this.redis.exists(key)) {
+        this.redis.del(key);
+      }
+    });
   }
 
   async create(createRoleDto: CreateRoleDto) {
@@ -136,11 +149,24 @@ export class RolesService {
     const role = await this.prismaService.role.findUnique({
       where: {
         id,
+        deleted: false,
       },
       select: {
         name: true,
+        roleInUser: {
+          select: {
+            userId: true,
+          },
+        },
       },
     });
+
+    if (!role) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Role not found',
+      };
+    }
 
     if (this.isDefaultAdministrator(role.name)) {
       return {
@@ -154,7 +180,7 @@ export class RolesService {
       description: updateRoleDto.description,
       disabled: updateRoleDto.disabled,
     };
-    if (updateRoleDto.permissions) {
+    if (updateRoleDto.permissions || updateRoleDto.permissions === null) {
       data.roleInPermission = {
         deleteMany: {},
       };
@@ -174,6 +200,16 @@ export class RolesService {
       },
       data,
     });
+
+    if (
+      role.roleInUser.length &&
+      (updateRoleDto.disabled !== undefined ||
+        updateRoleDto.permissions !== undefined)
+    ) {
+      this.clearPermissionsCache(
+        role.roleInUser.map((roleInUser) => roleInUser.userId),
+      );
+    }
   }
 
   remove(id: number) {
