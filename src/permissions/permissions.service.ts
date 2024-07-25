@@ -5,14 +5,20 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { generateMenus } from '../common/utils/index';
+import { Prisma } from '@prisma/client';
+import { getPermissionsKey } from '../common/config/redis.key';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { QueryPermissionDto } from './dto/query-permission.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PermissionsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
 
   private async validatePermission(permissionDto: CreatePermissionDto) {
     if (permissionDto.type !== 'BUTTON' && !permissionDto.path) {
@@ -104,6 +110,31 @@ export class PermissionsService {
       name === '角色管理' ||
       name === '菜单管理'
     );
+  }
+
+  private async changePermissionsCache(
+    deletePermission: string,
+    updatePermission?: string,
+    mode: 'update' | 'delete' = 'update',
+  ) {
+    const prefix = getPermissionsKey('');
+    const keys = await this.redis.keys(`${prefix}*`);
+    keys.forEach(async (key) => {
+      const permissions = await this.redis.smembers(key);
+      if (!permissions.includes(deletePermission)) {
+        return;
+      }
+
+      if (mode === 'delete') {
+        this.redis.del(key);
+        return;
+      }
+
+      this.redis.srem(key, deletePermission);
+      if (updatePermission) {
+        this.redis.sadd(key, updatePermission);
+      }
+    });
   }
 
   async create(createPermissionDto: CreatePermissionDto) {
@@ -215,6 +246,12 @@ export class PermissionsService {
         id,
         deleted: false,
       },
+      select: {
+        id: true,
+        name: true,
+        permission: true,
+        type: true,
+      },
     });
 
     if (!permission) {
@@ -248,7 +285,7 @@ export class PermissionsService {
           },
           OR: [
             {
-              id: updatePermissionDto.pid,
+              id: updatePermissionDto.pid ?? undefined,
             },
             {
               name: updatePermissionDto.name,
@@ -300,16 +337,21 @@ export class PermissionsService {
       updatePermissionDto.sort = 0;
     }
 
-    await this.prismaService.permission
-      .update({
-        where: {
-          id,
-        },
-        data: updatePermissionDto,
-      })
-      .catch(() => {
-        throw new InternalServerErrorException('Failed to update permission');
-      });
+    if (updatePermissionDto.disabled) {
+      this.changePermissionsCache(permission.permission, '', 'delete');
+    } else if (updatePermissionDto.permission !== undefined) {
+      this.changePermissionsCache(
+        permission.permission,
+        updatePermissionDto.permission,
+      );
+    }
+
+    await this.prismaService.permission.update({
+      where: {
+        id,
+      },
+      data: updatePermissionDto,
+    });
   }
 
   async remove(id: number) {
