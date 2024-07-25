@@ -259,6 +259,61 @@ export class RolesService {
     });
   }
 
+  async batchRemove(ids: number[]) {
+    const roles = await this.prismaService.role.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        deleted: false,
+      },
+      select: {
+        name: true,
+        roleInUser: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (roles.length !== ids.length) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Some roles not found',
+      };
+    }
+
+    const hasDefaultAdminRole = roles.some((role) =>
+      this.isDefaultAdministrator(role.name),
+    );
+    if (hasDefaultAdminRole) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default administrator role cannot be deleted',
+      };
+    }
+
+    const rolesWithUser = roles.filter((role) => role.roleInUser.length);
+    if (rolesWithUser.length) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Some roles have been assigned to the user',
+      };
+    }
+
+    await this.prismaService.role.updateMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+      data: {
+        deleted: true,
+      },
+    });
+  }
+
   async findRolesById(ids: number[]) {
     const roleInfos = await this.prismaService.role.findMany({
       where: {

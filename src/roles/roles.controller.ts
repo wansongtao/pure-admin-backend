@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { QueryRoleDto } from './dto/query-role.dto';
+import { DeleteRoleDto } from './dto/delete-role.dto';
 import { RoleListEntity, RoleDetailEntity } from './entities/role.entity';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { NullResponseEntity } from '../common/entities/api-response.entity';
@@ -74,5 +75,12 @@ export class RolesController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.rolesService.remove(id);
+  }
+
+  @ApiOperation({ summary: '批量删除角色' })
+  @ApiBaseResponse()
+  @Post('batch-delete')
+  batchRemove(@Body() deleteRoleDto: DeleteRoleDto) {
+    return this.rolesService.batchRemove(deleteRoleDto.ids);
   }
 }
