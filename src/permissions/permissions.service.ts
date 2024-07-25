@@ -348,6 +348,11 @@ export class PermissionsService {
       select: {
         id: true,
         name: true,
+        roleInPermission: {
+          select: {
+            roleId: true,
+          },
+        },
         children: {
           select: {
             id: true,
@@ -363,6 +368,14 @@ export class PermissionsService {
       };
     }
 
+    if (permission.roleInPermission.length > 0) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message:
+          'The permission has been assigned to the role and cannot be deleted',
+      };
+    }
+
     if (permission.children.length > 0) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -373,7 +386,6 @@ export class PermissionsService {
     await this.prismaService.permission.update({
       where: {
         id,
-        deleted: false,
       },
       data: {
         deleted: true,
@@ -392,6 +404,11 @@ export class PermissionsService {
       select: {
         id: true,
         name: true,
+        roleInPermission: {
+          select: {
+            roleId: true,
+          },
+        },
         children: {
           select: {
             id: true,
@@ -404,6 +421,17 @@ export class PermissionsService {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Some permissions do not exist',
+      };
+    }
+
+    const hasRole = permissions.some(
+      (item) => item.roleInPermission.length > 0,
+    );
+    if (hasRole) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message:
+          'Some permissions have been assigned to the role and cannot be deleted',
       };
     }
 
@@ -420,7 +448,6 @@ export class PermissionsService {
         id: {
           in: ids,
         },
-        deleted: false,
       },
       data: {
         deleted: true,
