@@ -235,17 +235,10 @@ export class RolesService {
       };
     }
 
-    if (this.isDefaultAdministrator(role.name)) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'The default administrator role cannot be deleted',
-      };
-    }
-
     if (role.roleInUser.length) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: 'The role has been assigned to the user',
+        message: 'The role has been assigned to the user and cannot be deleted',
       };
     }
 
@@ -284,21 +277,12 @@ export class RolesService {
       };
     }
 
-    const hasDefaultAdminRole = roles.some((role) =>
-      this.isDefaultAdministrator(role.name),
-    );
-    if (hasDefaultAdminRole) {
+    const hasUser = roles.some((role) => role.roleInUser.length > 0);
+    if (hasUser) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: 'The default administrator role cannot be deleted',
-      };
-    }
-
-    const rolesWithUser = roles.filter((role) => role.roleInUser.length);
-    if (rolesWithUser.length) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Some roles have been assigned to the user',
+        message:
+          'Some roles have been assigned to the user and cannot be deleted',
       };
     }
 
