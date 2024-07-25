@@ -212,8 +212,51 @@ export class RolesService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} role`;
+  async remove(id: number) {
+    const role = await this.prismaService.role.findUnique({
+      where: {
+        id,
+        deleted: false,
+      },
+      select: {
+        name: true,
+        roleInUser: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (!role) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Role not found',
+      };
+    }
+
+    if (this.isDefaultAdministrator(role.name)) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default administrator role cannot be deleted',
+      };
+    }
+
+    if (role.roleInUser.length) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The role has been assigned to the user',
+      };
+    }
+
+    await this.prismaService.role.update({
+      where: {
+        id,
+      },
+      data: {
+        deleted: true,
+      },
+    });
   }
 
   async findRolesById(ids: number[]) {

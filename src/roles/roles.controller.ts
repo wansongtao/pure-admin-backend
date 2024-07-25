@@ -69,8 +69,10 @@ export class RolesController {
     return this.rolesService.update(id, updateRoleDto);
   }
 
+  @ApiOperation({ summary: '删除角色' })
+  @ApiBaseResponse()
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.rolesService.remove(id);
   }
 }
