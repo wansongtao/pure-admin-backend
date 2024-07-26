@@ -10,6 +10,7 @@ import { hash } from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
+import { UserListItem } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -90,61 +91,62 @@ export class UsersService {
   }
 
   async findAll(queryUserDto: QueryUserDto) {
-    const users = await this.prismaService.user
-      .findMany({
-        skip: queryUserDto.pageSize * (queryUserDto.page - 1),
-        take: queryUserDto.pageSize,
-        orderBy: { createdAt: queryUserDto.sort },
-        where: {
-          deleted: false,
-          disabled: queryUserDto.disabled,
-          createdAt: { gte: queryUserDto.beginTime, lte: queryUserDto.endTime },
-          OR: [
-            {
-              userName: { contains: queryUserDto.keyword, mode: 'insensitive' },
-            },
-            {
-              profile: {
-                nickName: {
-                  contains: queryUserDto.keyword,
-                  mode: 'insensitive',
-                },
-              },
-            },
-          ],
-        },
-        select: {
-          id: true,
-          userName: true,
-          disabled: true,
-          createdAt: true,
-          profile: {
-            select: { nickName: true, avatar: true },
-          },
-          roleInUser: {
-            select: {
-              roleId: true,
-            },
-          },
-        },
-      })
-      .catch(() => {
-        throw new InternalServerErrorException('Failed to find users');
-      });
+    let whereCondition = '';
+    if (queryUserDto.disabled !== undefined) {
+      whereCondition += ` AND u.disabled = ${queryUserDto.disabled}`;
+    }
+    if (queryUserDto.keyword) {
+      whereCondition += ` AND (u.user_name ILIKE '%${queryUserDto.keyword}%' OR p.nick_name ILIKE '%${queryUserDto.keyword}%')`;
+    }
+    if (queryUserDto.beginTime) {
+      whereCondition += ` AND u.created_at >= '${queryUserDto.beginTime}'`;
+    }
+    if (queryUserDto.endTime) {
+      whereCondition += ` AND u.created_at <= '${queryUserDto.endTime}'`;
+    }
 
-    return users.map((user) => {
-      const profile = user.profile;
-      const roles = user.roleInUser.map((role) => role.roleId);
+    const sort = queryUserDto.sort === 'desc' ? 'DESC' : 'ASC';
+    const limit = queryUserDto.pageSize;
+    const offset = queryUserDto.pageSize * (queryUserDto.page - 1);
 
+    const sql = `WITH ranked_users AS (
+    SELECT
+        u.id,
+        u.user_name,
+        u.disabled,
+        u.created_at,
+        u.updated_at,
+        p.avatar,
+        p.nick_name,
+        ARRAY_AGG(r.name) AS role_names,
+        COUNT(*) OVER() AS total_count
+    FROM users u
+        JOIN profiles p ON u.id = p.user_id
+        JOIN role_in_user ur ON u.id = ur.user_id
+        JOIN roles r ON ur.role_id = r.id
+    WHERE u.deleted = false${whereCondition}
+    GROUP BY u.id, u.user_name, u.disabled, u.created_at, u.updated_at, p.avatar, p.nick_name)
+    SELECT * FROM ranked_users ORDER BY created_at ${sort} LIMIT ${limit} OFFSET ${offset}`;
+
+    const users = (await this.prismaService.$queryRawUnsafe(sql)) as any[];
+    if (!users || users?.length === 0) {
+      return { list: [], total: 0 };
+    }
+    const total = Number(users[0].total_count);
+    const list: UserListItem[] = users.map((user) => {
       return {
         id: user.id,
-        userName: user.userName,
+        userName: user.user_name,
         disabled: user.disabled,
-        createdAt: user.createdAt,
-        ...profile,
-        roles,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+        avatar: user.avatar,
+        nickName: user.nick_name,
+        roleNames: user.role_names,
       };
     });
+
+    return { list, total };
   }
 
   async findOne(id: string) {

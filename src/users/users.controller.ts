@@ -9,21 +9,16 @@ import {
   Query,
   UsePipes,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
-import { UserEntity } from './entities/user.entity';
+import { Permissions } from '../common/decorators/permission.decorator';
+import { UserListEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
-import { Permissions } from '../common/decorators/permission.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -44,25 +39,28 @@ export class UsersController {
   @ApiOperation({
     summary: '获取用户列表',
   })
-  @ApiQuery({ type: QueryUserDto, required: false })
-  @ApiBaseResponse(UserEntity, 'array')
+  @ApiBaseResponse(UserListEntity)
   @Get()
   @UsePipes(
     new ParseQueryPipe<keyof Pick<QueryUserDto, 'disabled' | 'keyword'>>({
-      keyword: { type: 'string', maxLength: 50 },
+      keyword: {
+        type: 'string',
+        maxLength: 50,
+        regexp: /^[a-zA-Z0-9\u4e00-\u9fa5,_-]*$/,
+      },
       disabled: { type: 'boolean' },
     }),
   )
-  findAll(@Query() query: QueryUserDto): Promise<UserEntity[]> {
+  findAll(@Query() query: QueryUserDto): Promise<UserListEntity> {
     return this.usersService.findAll(query);
   }
 
   @ApiOperation({
     summary: '获取用户详情',
   })
-  @ApiBaseResponse(UserEntity)
+  @ApiBaseResponse()
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<UserEntity> {
+  findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
