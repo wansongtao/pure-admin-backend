@@ -185,7 +185,7 @@ export class AuthService {
       return permissions;
     }
 
-    const results: { user_name: string; permissions: string[] }[] = await this
+    const results: { user_name: string; permissions?: string[] }[] = await this
       .prismaService.$queryRaw`
       WITH user_permissions AS (
       SELECT
@@ -213,7 +213,7 @@ export class AuthService {
       return defaultPermissions;
     }
 
-    const userPermissions = results[0].permissions;
+    const userPermissions = results[0].permissions ?? [];
     this.savePermissionsToRedis(userId, userPermissions);
     return userPermissions;
   }
