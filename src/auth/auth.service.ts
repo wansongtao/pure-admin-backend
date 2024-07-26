@@ -194,17 +194,12 @@ export class AuthService {
       FROM
         users u
         LEFT JOIN role_in_user ur ON u.id = ur.user_id
-        LEFT JOIN roles r ON ur.role_id = r.id
+        LEFT JOIN roles r ON ur.role_id = r.id AND r.deleted = false AND r.disabled = false
         LEFT JOIN role_in_permission rp ON r.id = rp.role_id
-        LEFT JOIN permissions pe ON rp.permission_id = pe.id
-      WHERE
-        u.id = ${userId}
-        AND r.deleted = FALSE
-        AND pe.deleted = FALSE
-        AND r.disabled = FALSE
-        AND pe.disabled = FALSE
-      GROUP BY u.user_name)
-      SELECT * FROM user_permissions;`;
+        LEFT JOIN permissions pe ON rp.permission_id = pe.id AND pe.deleted = false AND pe.disabled = false
+      WHERE u.id = ${userId} GROUP BY u.user_name)
+      SELECT * FROM user_permissions;
+      `;
 
     if (!results.length) {
       this.savePermissionsToRedis(userId, []);
