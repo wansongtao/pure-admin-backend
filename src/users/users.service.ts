@@ -116,32 +116,39 @@ export class UsersService {
     const limit = queryUserDto.pageSize;
     const offset = queryUserDto.pageSize * (queryUserDto.page - 1);
 
-    const sql = `WITH ranked_users AS (
-    SELECT
-        u.id,
-        u.user_name,
-        u.disabled,
-        u.created_at,
-        u.updated_at,
-        p.avatar,
-        p.nick_name,
-        CASE WHEN COUNT(r.name) > 0 THEN ARRAY_AGG(r.name)
-        ELSE ARRAY[]::VARCHAR[] END AS role_names,
-        COUNT(*) OVER() AS total_count
-    FROM users u
-        JOIN profiles p ON u.id = p.user_id
-        LEFT JOIN role_in_user ur ON u.id = ur.user_id
-        LEFT JOIN roles r ON ur.role_id = r.id
-    WHERE u.deleted = false${whereCondition}
-    GROUP BY u.id, u.user_name, u.disabled, u.created_at, u.updated_at, p.avatar, p.nick_name)
-    SELECT * FROM ranked_users ORDER BY created_at ${sort} LIMIT ${limit} OFFSET ${offset}`;
+    const sql = `
+    WITH filtered_users AS (
+      SELECT
+        u.id, u.user_name, u.disabled, u.created_at, u.updated_at, p.avatar, p.nick_name
+      FROM users u JOIN profiles p ON u.id = p.user_id
+      WHERE u.deleted = false${whereCondition}
+    ),
+    user_roles AS (
+      SELECT
+        ur.user_id, STRING_AGG(r.name, ',' ORDER BY r.name) AS role_names
+      FROM role_in_user ur JOIN roles r ON ur.role_id = r.id
+      WHERE r.deleted = false AND r.disabled = false
+      GROUP BY ur.user_id
+    ),
+    total_count AS (SELECT COUNT(*) AS count FROM filtered_users)
+    SELECT fu.*, ur.role_names, tc.count AS total_count FROM filtered_users fu
+    LEFT JOIN user_roles ur ON fu.id = ur.user_id
+    CROSS JOIN total_count tc
+    ORDER BY fu.created_at ${sort} LIMIT ${limit} OFFSET ${offset};
+    `;
 
     const users = (await this.prismaService.$queryRawUnsafe(sql)) as any[];
     if (!users || users?.length === 0) {
       return { list: [], total: 0 };
     }
+
     const total = Number(users[0].total_count);
     const list: UserListItem[] = users.map((user) => {
+      let roleNames = user.role_names;
+      if (roleNames) {
+        roleNames = roleNames.split(',');
+      }
+
       return {
         id: user.id,
         userName: user.user_name,
@@ -150,7 +157,7 @@ export class UsersService {
         updatedAt: user.updated_at,
         avatar: user.avatar,
         nickName: user.nick_name,
-        roleNames: user.role_names,
+        roleNames,
       };
     });
 
