@@ -24,9 +24,10 @@ export class RolesService {
   }
 
   private clearPermissionsCache(userIds: string[]) {
-    userIds.forEach((userId) => {
+    userIds.forEach(async (userId) => {
       const key = getPermissionsKey(userId);
-      if (this.redis.exists(key)) {
+      const hasKey = await this.redis.exists(key);
+      if (hasKey) {
         this.redis.del(key);
       }
     });
