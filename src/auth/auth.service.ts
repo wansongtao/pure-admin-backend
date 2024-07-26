@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -16,6 +16,7 @@ import {
   getBlackListKey,
   getPermissionsKey,
 } from '../common/config/redis.key';
+import { PrismaService } from 'nestjs-prisma';
 
 @Injectable()
 export class AuthService {
@@ -26,12 +27,27 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly rolesService: RolesService,
     private readonly permissionsService: PermissionsService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   getDefaultAdminPermission() {
     const defaultPermission =
       this.configService.get<string>('DEFAULT_SUPER_PERMISSION') || '*:*:*';
     return defaultPermission;
+  }
+
+  isDefaultAdministrator(userName: string) {
+    const defaultName = this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
+    return userName === defaultName;
+  }
+
+  private savePermissionsToRedis(userId: string, permissions: string[]) {
+    const permissionsKey = getPermissionsKey(userId);
+    this.redis.sadd(permissionsKey, permissions);
+    this.redis.expire(
+      permissionsKey,
+      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+    );
   }
 
   generateCaptcha(ip: string, userAgent: string) {
@@ -109,9 +125,9 @@ export class AuthService {
   }
 
   async getUserInfo(userId: string) {
-    const user = await this.usersService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException(`No user found for userId: ${userId}`);
+    const user = (await this.usersService.findOne(userId)) as unknown as any;
+    if (user.statusCode >= 400) {
+      return user;
     }
 
     const userInfo: UserInfoEntity = {
@@ -169,27 +185,47 @@ export class AuthService {
       return permissions;
     }
 
-    const user = await this.usersService.findOne(userId);
-    if (!user || !user.roles?.length) {
+    const results: { user_name: string; permissions: string[] }[] = await this
+      .prismaService.$queryRaw`
+      WITH user_permissions AS (
+        SELECT
+            u.user_name,
+            CASE
+                WHEN COUNT(pe.permission) > 0 THEN ARRAY_AGG(pe.permission)
+                ELSE ARRAY[]::VARCHAR[]
+            END AS permissions
+        FROM
+            users u
+            LEFT JOIN role_in_user ur ON u.id = ur.user_id
+            LEFT JOIN roles r ON ur.role_id = r.id
+            LEFT JOIN role_in_permission rp ON r.id = rp.role_id
+            LEFT JOIN permissions pe ON rp.permission_id = pe.id
+        WHERE
+            u.id = ${userId}
+            and r.deleted = FALSE
+            and pe.deleted = FALSE
+            and r.disabled = FALSE
+            and pe.disabled = FALSE
+            and pe.permission IS NOT NULL
+        GROUP BY u.user_name
+      )
+      SELECT * FROM user_permissions
+    `;
+
+    if (!results.length) {
+      this.savePermissionsToRedis(userId, []);
       return [];
     }
-    if (this.usersService.isDefaultAdministrator(user.userName)) {
-      const defaultPermission = this.getDefaultAdminPermission();
-      return [defaultPermission];
+
+    const userName = results[0].user_name;
+    if (this.isDefaultAdministrator(userName)) {
+      const defaultPermissions = [this.getDefaultAdminPermission()];
+      this.savePermissionsToRedis(userId, defaultPermissions);
+      return defaultPermissions;
     }
 
-    const userPermissions =
-      await this.permissionsService.findPermissionsByRoleId(user.roles);
-    if (!userPermissions.length) {
-      return [];
-    }
-
-    this.redis.sadd(permissionsKey, userPermissions);
-    this.redis.expire(
-      permissionsKey,
-      +this.configService.get('JWT_EXPIRES_IN') || 86400,
-    );
-
+    const userPermissions = results[0].permissions;
+    this.savePermissionsToRedis(userId, userPermissions);
     return userPermissions;
   }
 }
