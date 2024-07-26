@@ -17,12 +17,6 @@ export class RolesService {
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  private isDefaultAdministrator(roleName: string) {
-    const defaultName =
-      this.configService.get<string>('DEFAULT_ROLE_NAME') || 'admin';
-    return roleName === defaultName;
-  }
-
   private clearPermissionsCache(userIds: string[]) {
     userIds.forEach(async (userId) => {
       const key = getPermissionsKey(userId);
@@ -147,13 +141,29 @@ export class RolesService {
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto) {
-    const role = await this.prismaService.role.findUnique({
-      where: {
-        id,
-        deleted: false,
-      },
+    if (id === 1) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The default administrator role cannot be modified',
+      };
+    }
+
+    const whereCondition: Prisma.RoleWhereInput = {
+      OR: [
+        {
+          id,
+          deleted: false,
+        },
+      ],
+    };
+    if (updateRoleDto.name) {
+      whereCondition.OR.push({
+        name: updateRoleDto.name,
+      });
+    }
+    const roles = await this.prismaService.role.findMany({
+      where: whereCondition,
       select: {
-        name: true,
         roleInUser: {
           select: {
             userId: true,
@@ -162,17 +172,16 @@ export class RolesService {
       },
     });
 
-    if (!role) {
+    if (!roles.length) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Role not found',
       };
     }
-
-    if (this.isDefaultAdministrator(role.name)) {
+    if (roles.length > 1) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: 'The default administrator role cannot be modified',
+        message: 'The name already exists',
       };
     }
 
@@ -202,6 +211,7 @@ export class RolesService {
       data,
     });
 
+    const role = roles[0];
     if (
       role.roleInUser.length &&
       (updateRoleDto.disabled !== undefined ||
