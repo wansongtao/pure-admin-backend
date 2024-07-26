@@ -1,13 +1,15 @@
 import {
   HttpStatus,
   Injectable,
-  InternalServerErrorException,
   NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
 import { hash } from 'bcrypt';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
+import { getPermissionsKey } from '../common/config/redis.key';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -18,10 +20,19 @@ export class UsersService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   private generateHashPassword(password: string) {
     return hash(password, +this.configService.get('BCRYPT_SALT_ROUNDS') || 10);
+  }
+
+  private async clearPermissionsCache(userId: string) {
+    const key = getPermissionsKey(userId);
+    const hasKey = await this.redis.exists(key);
+    if (hasKey) {
+      this.redis.del(key);
+    }
   }
 
   isDefaultAdministrator(userName: string) {
@@ -184,40 +195,56 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const userName = await this.findUserName(id);
-    if (
-      (updateUserDto.disabled || updateUserDto.roles) &&
-      this.isDefaultAdministrator(userName)
-    ) {
-      throw new NotAcceptableException(
-        'The super administrator cannot be disabled or have roles changed',
-      );
+    const user = await this.prismaService.user.findUnique({
+      where: { id, deleted: false },
+      select: { userName: true },
+    });
+    if (!user) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'The user does not exist',
+      };
     }
 
-    await this.prismaService.user
-      .update({
-        where: { id, deleted: false },
-        data: {
-          disabled: updateUserDto.disabled,
-          profile: {
-            update: {
-              nickName: updateUserDto.nickName,
-            },
-          },
-          roleInUser: updateUserDto.roles && {
-            deleteMany: {},
-            createMany: {
-              data: updateUserDto.roles.map((roleId) => ({
-                roleId,
-              })),
-            },
+    if (this.isDefaultAdministrator(user.userName)) {
+      if (updateUserDto.disabled) {
+        return {
+          statusCode: HttpStatus.NOT_ACCEPTABLE,
+          message: 'The super administrator cannot be disabled',
+        };
+      }
+      if (!updateUserDto.roles?.includes(1)) {
+        return {
+          statusCode: HttpStatus.NOT_ACCEPTABLE,
+          message:
+            'The super administrator must have the super administrator role',
+        };
+      }
+    }
+
+    await this.prismaService.user.update({
+      where: { id, deleted: false },
+      data: {
+        disabled: updateUserDto.disabled,
+        profile: {
+          update: {
+            nickName: updateUserDto.nickName,
           },
         },
-        select: { id: true },
-      })
-      .catch(() => {
-        throw new InternalServerErrorException('Failed to update a user');
-      });
+        roleInUser: updateUserDto.roles && {
+          deleteMany: {},
+          createMany: {
+            data: updateUserDto.roles.map((roleId) => ({
+              roleId,
+            })),
+          },
+        },
+      },
+    });
+
+    if (updateUserDto.roles) {
+      this.clearPermissionsCache(id);
+    }
   }
 
   async remove(id: string) {
