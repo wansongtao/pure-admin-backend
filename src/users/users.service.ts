@@ -113,12 +113,13 @@ export class UsersService {
         u.updated_at,
         p.avatar,
         p.nick_name,
-        ARRAY_AGG(r.name) AS role_names,
+        CASE WHEN COUNT(r.name) > 0 THEN ARRAY_AGG(r.name)
+        ELSE ARRAY[]::VARCHAR[] END AS role_names,
         COUNT(*) OVER() AS total_count
     FROM users u
         JOIN profiles p ON u.id = p.user_id
-        JOIN role_in_user ur ON u.id = ur.user_id
-        JOIN roles r ON ur.role_id = r.id
+        LEFT JOIN role_in_user ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
     WHERE u.deleted = false${whereCondition}
     GROUP BY u.id, u.user_name, u.disabled, u.created_at, u.updated_at, p.avatar, p.nick_name)
     SELECT * FROM ranked_users ORDER BY created_at ${sort} LIMIT ${limit} OFFSET ${offset}`;
