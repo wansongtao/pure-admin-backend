@@ -58,36 +58,31 @@ export class UsersService {
       select: { id: true },
     });
     if (user) {
-      throw new NotAcceptableException('The user already exists');
+      throw new NotAcceptableException('The user name already exists');
     }
 
     const password = this.configService.get('DEFAULT_PASSWORD') || 'd.123456';
     const hashedPassword = await this.generateHashPassword(password);
 
-    await this.prismaService.user
-      .create({
-        data: {
-          userName: createUserDto.userName,
-          password: hashedPassword,
-          disabled: createUserDto.disabled,
-          profile: {
-            create: {
-              nickName: createUserDto.nickName,
-              avatar: createUserDto.avatar,
-            },
-          },
-          roleInUser: createUserDto.roles && {
-            createMany: {
-              data: createUserDto.roles.map((roleId) => ({
-                roleId,
-              })),
-            },
+    await this.prismaService.user.create({
+      data: {
+        userName: createUserDto.userName,
+        password: hashedPassword,
+        disabled: createUserDto.disabled,
+        profile: {
+          create: {
+            nickName: createUserDto.nickName,
           },
         },
-      })
-      .catch(() => {
-        throw new InternalServerErrorException('Failed to create a user');
-      });
+        roleInUser: createUserDto.roles && {
+          createMany: {
+            data: createUserDto.roles.map((roleId) => ({
+              roleId,
+            })),
+          },
+        },
+      },
+    });
   }
 
   async findAll(queryUserDto: QueryUserDto) {
@@ -208,7 +203,6 @@ export class UsersService {
           profile: {
             update: {
               nickName: updateUserDto.nickName,
-              avatar: updateUserDto.avatar,
             },
           },
           roleInUser: updateUserDto.roles && {
