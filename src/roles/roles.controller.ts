@@ -27,6 +27,7 @@ import {
   RoleDetailEntity,
   RoleEntity,
 } from './entities/role.entity';
+import { Permissions } from '../common/decorators/permission.decorator';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { NullResponseEntity } from '../common/entities/api-response.entity';
 
@@ -39,6 +40,7 @@ export class RolesController {
   @ApiOperation({ summary: '创建角色' })
   @ApiBaseResponse()
   @Post()
+  @Permissions('system:role:add')
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);
   }
@@ -79,6 +81,7 @@ export class RolesController {
   @ApiOperation({ summary: '更新角色' })
   @ApiBaseResponse()
   @Patch(':id')
+  @Permissions('system:role:edit')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRoleDto: UpdateRoleDto,
@@ -89,6 +92,7 @@ export class RolesController {
   @ApiOperation({ summary: '删除角色' })
   @ApiBaseResponse()
   @Delete(':id')
+  @Permissions('system:role:del')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.rolesService.remove(id);
   }
@@ -96,6 +100,7 @@ export class RolesController {
   @ApiOperation({ summary: '批量删除角色' })
   @ApiBaseResponse()
   @Post('batch-delete')
+  @Permissions('system:role:del')
   batchRemove(@Body() deleteRoleDto: DeleteRoleDto) {
     return this.rolesService.batchRemove(deleteRoleDto.ids);
   }
