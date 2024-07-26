@@ -1,6 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
-import { ConfigService } from '@nestjs/config';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { getPermissionsKey } from '../common/config/redis.key';
@@ -13,7 +12,6 @@ import { QueryRoleDto } from './dto/query-role.dto';
 export class RolesService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
