@@ -1,6 +1,6 @@
 import { User } from '@prisma/client';
 import { ProfileEntity } from './profile.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PickType } from '@nestjs/swagger';
 
 export class UserEntity implements Omit<User, 'deleted' | 'password'> {
   @ApiProperty({ description: '用户id', type: 'string' })
@@ -9,7 +9,7 @@ export class UserEntity implements Omit<User, 'deleted' | 'password'> {
   @ApiProperty({ description: '用户名', type: 'string' })
   userName: User['userName'];
 
-  @ApiProperty({ description: '是否禁用', type: 'boolean' })
+  @ApiProperty({ description: '是否禁用' })
   disabled: User['disabled'];
 
   @ApiProperty({ description: '创建时间(UTC)', type: 'string' })
@@ -36,4 +36,15 @@ export class UserListEntity {
 
   @ApiProperty({ description: '用户列表', type: [UserListItem] })
   list: UserListItem[];
+}
+
+export class UserDetailEntity extends PickType(UserEntity, [
+  'userName',
+  'disabled',
+]) {
+  @ApiProperty({ description: '用户昵称', type: 'string', required: false })
+  nickName: ProfileEntity['nickName'];
+
+  @ApiProperty({ description: '角色列表', type: [Number], required: false })
+  roles: number[];
 }

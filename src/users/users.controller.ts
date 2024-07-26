@@ -14,7 +14,8 @@ import { UsersService } from './users.service';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
 import { Permissions } from '../common/decorators/permission.decorator';
-import { UserListEntity } from './entities/user.entity';
+import { UserListEntity, UserDetailEntity } from './entities/user.entity';
+import { NullResponseEntity } from '../common/entities/api-response.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -58,9 +59,11 @@ export class UsersController {
   @ApiOperation({
     summary: '获取用户详情',
   })
-  @ApiBaseResponse()
+  @ApiBaseResponse(UserDetailEntity)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param('id') id: string,
+  ): Promise<UserDetailEntity | NullResponseEntity> {
     return this.usersService.findOne(id);
   }
 
