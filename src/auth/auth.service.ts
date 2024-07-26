@@ -188,29 +188,23 @@ export class AuthService {
     const results: { user_name: string; permissions: string[] }[] = await this
       .prismaService.$queryRaw`
       WITH user_permissions AS (
-        SELECT
-            u.user_name,
-            CASE
-                WHEN COUNT(pe.permission) > 0 THEN ARRAY_AGG(pe.permission)
-                ELSE ARRAY[]::VARCHAR[]
-            END AS permissions
-        FROM
-            users u
-            LEFT JOIN role_in_user ur ON u.id = ur.user_id
-            LEFT JOIN roles r ON ur.role_id = r.id
-            LEFT JOIN role_in_permission rp ON r.id = rp.role_id
-            LEFT JOIN permissions pe ON rp.permission_id = pe.id
-        WHERE
-            u.id = ${userId}
-            and r.deleted = FALSE
-            and pe.deleted = FALSE
-            and r.disabled = FALSE
-            and pe.disabled = FALSE
-            and pe.permission IS NOT NULL
-        GROUP BY u.user_name
-      )
-      SELECT * FROM user_permissions
-    `;
+      SELECT
+        u.user_name,
+        ARRAY_AGG(DISTINCT pe.permission) FILTER (WHERE pe.permission IS NOT NULL) AS permissions
+      FROM
+        users u
+        LEFT JOIN role_in_user ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        LEFT JOIN role_in_permission rp ON r.id = rp.role_id
+        LEFT JOIN permissions pe ON rp.permission_id = pe.id
+      WHERE
+        u.id = ${userId}
+        AND r.deleted = FALSE
+        AND pe.deleted = FALSE
+        AND r.disabled = FALSE
+        AND pe.disabled = FALSE
+      GROUP BY u.user_name)
+      SELECT * FROM user_permissions;`;
 
     if (!results.length) {
       this.savePermissionsToRedis(userId, []);
