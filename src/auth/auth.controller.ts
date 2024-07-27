@@ -7,7 +7,10 @@ import {
   LoginEntity,
   UserInfoEntity,
 } from './entities/auth.entity';
-import { BaseResponseEntity } from '../common/entities/api-response.entity';
+import {
+  BaseResponseEntity,
+  NullResponseEntity,
+} from '../common/entities/api-response.entity';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
@@ -64,7 +67,7 @@ export class AuthController {
   @Get('userinfo')
   getUserInfo(
     @Req() req: { user: { userId: string } },
-  ): Promise<UserInfoEntity> {
+  ): Promise<UserInfoEntity | NullResponseEntity> {
     return this.authService.getUserInfo(req.user.userId);
   }
 }

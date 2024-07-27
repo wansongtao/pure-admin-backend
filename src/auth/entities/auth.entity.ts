@@ -24,6 +24,7 @@ class MenuEntity
       | 'deletedAt'
       | 'disabled'
       | 'permission'
+      | 'type'
       | 'sort'
     >
 {
@@ -38,12 +39,6 @@ class MenuEntity
 
   @ApiProperty({ description: '菜单路径', type: 'string' })
   path: Permission['path'];
-
-  @ApiProperty({
-    description: '菜单类型',
-    enum: ['DIRECTORY', 'MENU', 'BUTTON'],
-  })
-  type: Permission['type'];
 
   @ApiProperty({ description: '菜单组件路径', type: 'string' })
   component: Permission['component'];

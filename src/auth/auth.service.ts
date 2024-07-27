@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { RolesService } from '../roles/roles.service';
-import { PermissionsService } from '../permissions/permissions.service';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
@@ -18,6 +16,8 @@ import {
 } from '../common/config/redis.key';
 import { PrismaService } from 'nestjs-prisma';
 
+import type { IUserPermission } from '../common/types';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -25,8 +25,6 @@ export class AuthService {
     @InjectRedis() private readonly redis: Redis,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
-    private readonly rolesService: RolesService,
-    private readonly permissionsService: PermissionsService,
     private readonly prismaService: PrismaService,
   ) {}
 
@@ -125,56 +123,89 @@ export class AuthService {
   }
 
   async getUserInfo(userId: string) {
-    const user = (await this.usersService.findOne(userId)) as unknown as any;
-    if (user.statusCode >= 400) {
-      return user;
+    const userPermissions: IUserPermission[] = await this.prismaService
+      .$queryRaw`
+      WITH filtered_users AS (
+        SELECT u.id, u.user_name, p.avatar, p.nick_name
+        FROM users u
+            LEFT JOIN profiles p ON u.id = p.user_id
+        WHERE u.id = ${userId}
+      ),
+      user_roles AS (
+        SELECT ur.user_id, 
+        STRING_AGG(r.name, ','ORDER BY r.name) AS role_names, 
+        ARRAY_AGG(r.id) AS role_ids
+        FROM role_in_user ur
+        JOIN roles r ON ur.role_id = r.id AND r.disabled = false
+        WHERE ur.user_id IN (SELECT id FROM filtered_users)
+        GROUP BY ur.user_id
+      ),
+      role_permissions AS (
+        SELECT DISTINCT
+            ur.user_id, p.pid, p.id, p.name, p.path, p.permission, p.type, p.icon, 
+            p.component, p.redirect, p.hidden, p.sort, p.cache, p.props
+        FROM user_roles ur
+          JOIN role_in_permission rp ON rp.role_id = ANY (ur.role_ids)
+          JOIN permissions p ON rp.permission_id = p.id AND p.disabled = false
+      )
+      SELECT fu.user_name, fu.nick_name, fu.avatar, ur.role_names, rp.pid,
+      rp.id, rp.name, rp.path, rp.permission, rp.type, rp.icon, rp.component, rp.redirect, rp.hidden, 
+      rp.sort, rp.cache, rp.props
+      FROM filtered_users fu
+        LEFT JOIN user_roles ur ON fu.id = ur.user_id
+        LEFT JOIN role_permissions rp ON fu.id = rp.user_id
+      ORDER BY rp.sort DESC;
+    `;
+
+    if (!userPermissions?.length) {
+      return { statusCode: HttpStatus.NOT_FOUND, message: 'User not found' };
     }
 
     const userInfo: UserInfoEntity = {
-      name: user.nickName ?? user.userName,
-      avatar: user.avatar ?? '',
+      name: '',
+      avatar: '',
       roles: [],
       permissions: [],
       menus: [],
     };
 
-    const defaultPermission = this.getDefaultAdminPermission();
-    if (this.usersService.isDefaultAdministrator(user.userName)) {
-      userInfo.permissions = [defaultPermission];
-    }
-    if (!user.roles.length) {
+    const userPermission = userPermissions[0];
+    userInfo.name = userPermission.nick_name ?? userPermission.user_name;
+    userInfo.avatar = userPermission.avatar ?? '';
+    userInfo.roles = !!userPermission.role_names
+      ? userPermission.role_names.split(',')
+      : [];
+
+    if (!userInfo.roles.length) {
       return userInfo;
     }
 
-    const roles = await this.rolesService.findRolesById(user.roles);
-    if (!roles.length) {
-      return userInfo;
-    }
-    userInfo.roles = roles.map((role) => role.name);
-
-    const tempPermissionIds = roles.reduce((acc, role) => {
-      return acc.concat(role.permissionIds);
-    }, []);
-    if (!tempPermissionIds.length) {
-      return userInfo;
+    if (this.isDefaultAdministrator(userPermission.user_name)) {
+      userInfo.permissions = [this.getDefaultAdminPermission()];
+    } else {
+      userInfo.permissions = userPermissions
+        .filter((item) => item.permission)
+        .map((item) => item.permission);
     }
 
-    const permissionIds = Array.from(new Set(tempPermissionIds));
-    const permissionInfos =
-      await this.permissionsService.findPermissionsById(permissionIds);
-    if (!permissionInfos.length) {
-      return userInfo;
-    }
-
-    if (!userInfo.permissions.includes(defaultPermission)) {
-      userInfo.permissions = permissionInfos.map((item) => item.permission);
-    }
-
-    const menus = generateMenus(
-      permissionInfos.filter((item) => item.type !== 'BUTTON'),
-    );
+    const tempMenus = userPermissions
+      .filter((item) => item.type !== 'BUTTON')
+      .map((item) => {
+        return {
+          id: item.id,
+          pid: item.pid,
+          name: item.name,
+          path: item.path,
+          component: item.component,
+          cache: item.cache,
+          hidden: item.hidden,
+          icon: item.icon,
+          redirect: item.redirect,
+          props: item.props,
+        };
+      });
+    const menus = generateMenus(tempMenus);
     userInfo.menus = menus;
-
     return userInfo;
   }
 
