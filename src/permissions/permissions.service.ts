@@ -455,62 +455,6 @@ export class PermissionsService {
     });
   }
 
-  async findPermissionsById(ids: number[]) {
-    const permissionInfos = await this.prismaService.permission.findMany({
-      where: {
-        disabled: false,
-        deleted: false,
-        id: {
-          in: ids,
-        },
-      },
-      select: {
-        id: true,
-        pid: true,
-        name: true,
-        type: true,
-        permission: true,
-        icon: true,
-        path: true,
-        component: true,
-        redirect: true,
-        hidden: true,
-        cache: true,
-        props: true,
-        sort: true,
-      },
-      orderBy: {
-        sort: 'desc',
-      },
-    });
-
-    return permissionInfos;
-  }
-
-  async findPermissionsByRoleId(roleIds: number[]) {
-    const permission = await this.prismaService.permission.findMany({
-      where: {
-        disabled: false,
-        deleted: false,
-        permission: {
-          not: null,
-        },
-        roleInPermission: {
-          some: {
-            roleId: {
-              in: roleIds,
-            },
-          },
-        },
-      },
-      select: {
-        permission: true,
-      },
-    });
-
-    return permission.map((item) => item.permission);
-  }
-
   async findTree(containButton: boolean) {
     const whereCondition: Prisma.PermissionWhereInput = {
       disabled: false,
