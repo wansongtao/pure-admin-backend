@@ -307,35 +307,6 @@ export class RolesService {
     });
   }
 
-  async findRolesById(ids: number[]) {
-    const roleInfos = await this.prismaService.role.findMany({
-      where: {
-        disabled: false,
-        deleted: false,
-        id: {
-          in: ids,
-        },
-      },
-      select: {
-        name: true,
-        roleInPermission: {
-          select: {
-            permissionId: true,
-          },
-        },
-      },
-    });
-
-    return roleInfos.map((roleInfo) => {
-      return {
-        name: roleInfo.name,
-        permissionIds: roleInfo.roleInPermission.map(
-          (roleInPermission) => roleInPermission.permissionId,
-        ),
-      };
-    });
-  }
-
   findAllRoles() {
     return this.prismaService.role.findMany({
       where: {
