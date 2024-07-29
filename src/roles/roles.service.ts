@@ -26,7 +26,7 @@ export class RolesService {
   }
 
   async create(createRoleDto: CreateRoleDto) {
-    const role = await this.prismaService.role.findFirst({
+    const role = await this.prismaService.role.findUnique({
       where: {
         name: createRoleDto.name,
       },
@@ -36,7 +36,7 @@ export class RolesService {
     });
     if (role) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.CONFLICT,
         message: 'The name already exists',
       };
     }
