@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, NotAcceptableException } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
 import { hash } from 'bcrypt';
@@ -52,7 +52,10 @@ export class UsersService {
       select: { id: true },
     });
     if (user) {
-      throw new NotAcceptableException('The user name already exists');
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        message: 'The user already exists',
+      };
     }
 
     const password = this.configService.get('DEFAULT_PASSWORD') || 'd.123456';
