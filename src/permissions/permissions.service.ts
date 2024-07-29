@@ -311,6 +311,13 @@ export class PermissionsService {
       updatePermissionDto.sort = 0;
     }
 
+    await this.prismaService.permission.update({
+      where: {
+        id,
+      },
+      data: updatePermissionDto,
+    });
+
     if (updatePermissionDto.disabled) {
       this.changePermissionsCache(permission.permission, '', 'delete');
     } else if (updatePermissionDto.permission !== undefined) {
@@ -319,13 +326,6 @@ export class PermissionsService {
         updatePermissionDto.permission,
       );
     }
-
-    await this.prismaService.permission.update({
-      where: {
-        id,
-      },
-      data: updatePermissionDto,
-    });
   }
 
   async remove(id: number) {
