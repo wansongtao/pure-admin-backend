@@ -36,7 +36,7 @@ import { PermissionGuard } from './common/guard/permission.guard';
     RedisModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         type: 'single',
-        url: `redis://${configService.get<string>('REDIS_HOST')}:${+configService.get<number>('REDIS_PORT')}`,
+        url: configService.get<string>('REDIS_URL'),
       }),
       inject: [ConfigService],
     }),
