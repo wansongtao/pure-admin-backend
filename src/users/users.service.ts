@@ -1,9 +1,4 @@
-import {
-  HttpStatus,
-  Injectable,
-  NotAcceptableException,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, NotAcceptableException } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { ConfigService } from '@nestjs/config';
 import { hash } from 'bcrypt';
@@ -38,19 +33,6 @@ export class UsersService {
   isDefaultAdministrator(userName: string) {
     const defaultName = this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
     return userName === defaultName;
-  }
-
-  private async findUserName(id: string) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id, deleted: false },
-      select: { userName: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('The user does not exist');
-    }
-
-    return user.userName;
   }
 
   async validateUser(userName: string) {
@@ -255,40 +237,58 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    const userName = await this.findUserName(id);
-    if (this.isDefaultAdministrator(userName)) {
-      throw new NotAcceptableException(
-        'The super administrator cannot be deleted',
-      );
+    const user = await this.prismaService.user.findUnique({
+      where: { id, deleted: false },
+      select: { userName: true },
+    });
+
+    if (!user) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'The user does not exist',
+      };
+    }
+    if (this.isDefaultAdministrator(user.userName)) {
+      return {
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message: 'The super administrator cannot be deleted',
+      };
     }
 
     await this.prismaService.user.update({
       where: { id },
-      data: { deleted: true },
+      data: { deleted: true, roleInUser: { deleteMany: {} } },
     });
   }
 
   async batchRemove(ids: string[]) {
-    const userNames = await this.prismaService.user.findMany({
+    const users = await this.prismaService.user.findMany({
       where: { id: { in: ids }, deleted: false },
       select: { userName: true },
     });
 
-    if (userNames.length !== ids.length) {
-      throw new NotFoundException('Some users do not exist');
+    if (users.length !== ids.length) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Some users do not exist',
+      };
     }
 
-    if (
-      userNames.some(({ userName }) => this.isDefaultAdministrator(userName))
-    ) {
-      throw new NotAcceptableException(
-        'The super administrator cannot be deleted',
-      );
+    if (users.some(({ userName }) => this.isDefaultAdministrator(userName))) {
+      return {
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message: 'The super administrator cannot be deleted',
+      };
     }
 
-    await this.prismaService.user.updateMany({
-      where: { id: { in: ids } },
-      data: { deleted: true },
-    });
+    await this.prismaService.$transaction([
+      this.prismaService.user.updateMany({
+        where: { id: { in: ids } },
+        data: { deleted: true },
+      }),
+      this.prismaService.roleInUser.deleteMany({
+        where: { userId: { in: ids } },
+      }),
+    ]);
   }
 }
