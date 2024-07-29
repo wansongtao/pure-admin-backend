@@ -1,8 +1,4 @@
-import {
-  HttpStatus,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { generateMenus } from '../common/utils/index';
 import { Prisma } from '@prisma/client';
@@ -64,14 +60,11 @@ export class PermissionsService {
       },
     });
 
-    if (!permission) {
-      if (permissionDto.pid) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'The parent menu does not exist',
-        };
-      }
-      return;
+    if (!permission && permissionDto.pid) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'The parent menu does not exist',
+      };
     }
 
     if (permission.name === permissionDto.name) {
@@ -134,13 +127,9 @@ export class PermissionsService {
       return validateResult;
     }
 
-    await this.prismaService.permission
-      .create({
-        data: createPermissionDto,
-      })
-      .catch(() => {
-        throw new InternalServerErrorException('Failed to create permission');
-      });
+    await this.prismaService.permission.create({
+      data: createPermissionDto,
+    });
   }
 
   async findAll(query: QueryPermissionDto) {

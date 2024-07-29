@@ -15,10 +15,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-export class CreatePermissionDto
-  implements
-    Partial<Omit<Permission, 'id' | 'deleted' | 'createdAt' | 'updatedAt'>>
-{
+export class CreatePermissionDto {
   @IsNumber({}, { message: '父菜单ID必须为数字' })
   @ValidateIf((o) => o.pid !== undefined)
   @IsOptional()
@@ -28,12 +25,12 @@ export class CreatePermissionDto
     default: null,
     required: false,
   })
-  pid?: Permission['pid'];
+  pid?: number;
 
   @Matches(/^[a-zA-Z\u4e00-\u9fa5]{1,50}$/, { message: '菜单名称格式错误' })
   @IsNotEmpty({ message: '菜单名称不能为空' })
   @ApiProperty({ description: '菜单名称', type: 'string' })
-  name: Permission['name'];
+  name: string;
 
   @IsEnum(['DIRECTORY', 'MENU', 'BUTTON'], { message: '菜单类型错误' })
   @ApiProperty({
@@ -46,14 +43,14 @@ export class CreatePermissionDto
   @ValidateIf((o) => o.permission !== '')
   @IsOptional()
   @ApiProperty({ description: '权限标识', type: 'string', required: false })
-  permission?: Permission['permission'];
+  permission?: string;
 
   @MaxLength(50, { message: '菜单图标长度不能超过50' })
   @IsString({ message: '菜单图标必须为字符串' })
   @ValidateIf((o) => o.icon !== '')
   @IsOptional()
   @ApiProperty({ description: '菜单图标', type: 'string', required: false })
-  icon?: Permission['icon'];
+  icon?: string;
 
   @MinLength(2, { message: '菜单路径长度不能小于2' })
   @MaxLength(50, { message: '菜单路径长度不能超过50' })
@@ -62,7 +59,7 @@ export class CreatePermissionDto
   })
   @IsOptional()
   @ApiProperty({ description: '菜单路径', type: 'string', required: false })
-  path?: Permission['path'];
+  path?: string;
 
   @MinLength(6, { message: '菜单组件地址长度不能小于6' })
   @MaxLength(100, { message: '菜单组件地址长度不能超过100' })
@@ -72,7 +69,7 @@ export class CreatePermissionDto
   @ValidateIf((o) => o.component !== '')
   @IsOptional()
   @ApiProperty({ description: '菜单组件地址', type: 'string', required: false })
-  component?: Permission['component'];
+  component?: string;
 
   @Max(255, { message: '最大255' })
   @Min(0, { message: '最小0' })
@@ -84,7 +81,7 @@ export class CreatePermissionDto
     required: false,
     default: 0,
   })
-  sort?: Permission['sort'];
+  sort?: number;
 
   @MinLength(2, { message: '菜单重定向地址长度不能小于2' })
   @MaxLength(50, { message: '菜单重定向地址长度不能超过50' })
@@ -96,7 +93,7 @@ export class CreatePermissionDto
     type: 'string',
     required: false,
   })
-  redirect?: Permission['redirect'];
+  redirect?: string;
 
   @IsBoolean({ message: '是否禁用必须为布尔值' })
   @IsOptional()
@@ -106,7 +103,7 @@ export class CreatePermissionDto
     required: false,
     default: false,
   })
-  disabled?: Permission['disabled'];
+  disabled?: boolean;
 
   @IsBoolean({ message: '是否隐藏必须为布尔值' })
   @IsOptional()
@@ -116,7 +113,7 @@ export class CreatePermissionDto
     required: false,
     default: false,
   })
-  hidden?: Permission['hidden'];
+  hidden?: boolean;
 
   @IsBoolean({ message: '是否缓存必须为布尔值' })
   @IsOptional()
@@ -126,7 +123,7 @@ export class CreatePermissionDto
     required: false,
     default: false,
   })
-  cache?: Permission['cache'];
+  cache?: boolean;
 
   @IsBoolean({ message: 'vue-router的props属性必须为布尔值' })
   @IsOptional()
@@ -136,5 +133,5 @@ export class CreatePermissionDto
     required: false,
     default: false,
   })
-  props?: Permission['props'];
+  props?: boolean;
 }
