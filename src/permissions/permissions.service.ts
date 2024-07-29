@@ -60,11 +60,14 @@ export class PermissionsService {
       },
     });
 
-    if (!permission && permissionDto.pid) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: 'The parent menu does not exist',
-      };
+    if (!permission) {
+      if (permissionDto.pid) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'The parent menu does not exist',
+        };
+      }
+      return;
     }
 
     if (permission.name === permissionDto.name) {
