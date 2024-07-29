@@ -260,7 +260,7 @@ export class UsersService {
 
     await this.prismaService.user.update({
       where: { id },
-      data: { deleted: true, roleInUser: { deleteMany: {} } },
+      data: { deleted: true },
     });
   }
 
@@ -284,14 +284,9 @@ export class UsersService {
       };
     }
 
-    await this.prismaService.$transaction([
-      this.prismaService.user.updateMany({
-        where: { id: { in: ids } },
-        data: { deleted: true },
-      }),
-      this.prismaService.roleInUser.deleteMany({
-        where: { userId: { in: ids } },
-      }),
-    ]);
+    await this.prismaService.user.updateMany({
+      where: { id: { in: ids } },
+      data: { deleted: true },
+    });
   }
 }
