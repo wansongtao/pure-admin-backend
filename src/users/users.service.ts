@@ -205,7 +205,10 @@ export class UsersService {
           message: 'The super administrator cannot be disabled',
         };
       }
-      if (!updateUserDto.roles?.includes(1)) {
+      if (
+        updateUserDto.roles !== undefined &&
+        !updateUserDto.roles?.includes(1)
+      ) {
         return {
           statusCode: HttpStatus.NOT_ACCEPTABLE,
           message:
