@@ -222,31 +222,25 @@ export class RolesService {
   }
 
   async remove(id: number) {
-    const role = await this.prismaService.role.findUnique({
-      where: {
-        id,
-        deleted: false,
-      },
-      select: {
-        name: true,
-        roleInUser: {
-          select: {
-            userId: true,
-          },
-        },
-      },
-    });
+    const roleAndUsers: { role_name: string; user_name?: string }[] = await this
+      .prismaService.$queryRaw`
+      SELECT r.name as role_name, u.user_name
+      FROM roles r
+      LEFT JOIN role_in_user ur ON ur.role_id = r.id
+      LEFT JOIN users u ON u.id = ur.user_id AND u.deleted = false
+      WHERE r.id = ${id} AND r.deleted = false
+    `;
 
-    if (!role) {
+    if (!roleAndUsers.length) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Role not found',
       };
     }
 
-    if (role.roleInUser.length) {
+    if (roleAndUsers.some((item) => item.user_name)) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
         message: 'The role has been assigned to the user and cannot be deleted',
       };
     }
@@ -262,36 +256,28 @@ export class RolesService {
   }
 
   async batchRemove(ids: number[]) {
-    const roles = await this.prismaService.role.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-        deleted: false,
-      },
-      select: {
-        name: true,
-        roleInUser: {
-          select: {
-            userId: true,
-          },
-        },
-      },
-    });
+    const roleAndUsers: { role_name: string; user_name?: string }[] = await this
+      .prismaService.$queryRaw`
+      SELECT r.name as role_name, u.user_name
+      FROM roles r
+      LEFT JOIN role_in_user ur ON ur.role_id = r.id
+      LEFT JOIN users u ON u.id = ur.user_id AND u.deleted = false
+      WHERE r.id IN (${Prisma.join(ids)}) AND r.deleted = false
+    `;
 
-    if (roles.length !== ids.length) {
+    const hasUser = roleAndUsers.some((item) => item.user_name);
+    if (hasUser) {
       return {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: 'Some roles not found',
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message:
+          'Some roles have been assigned to the user and cannot be deleted',
       };
     }
 
-    const hasUser = roles.some((role) => role.roleInUser.length > 0);
-    if (hasUser) {
+    if (roleAndUsers.length !== ids.length) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message:
-          'Some roles have been assigned to the user and cannot be deleted',
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Some roles not found',
       };
     }
 
