@@ -141,7 +141,7 @@ export class RolesService {
   async update(id: number, updateRoleDto: UpdateRoleDto) {
     if (id === 1) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
         message: 'The default administrator role cannot be modified',
       };
     }
@@ -178,7 +178,7 @@ export class RolesService {
     }
     if (roles.length > 1) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.CONFLICT,
         message: 'The name already exists',
       };
     }
