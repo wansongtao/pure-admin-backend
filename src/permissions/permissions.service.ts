@@ -329,45 +329,38 @@ export class PermissionsService {
   }
 
   async remove(id: number) {
-    const permission = await this.prismaService.permission.findUnique({
-      where: {
-        id,
-        deleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        roleInPermission: {
-          select: {
-            roleId: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
+    const roleAndPermissions: {
+      id: number;
+      roles?: string;
+      children?: string;
+    }[] = await this.prismaService.$queryRaw`
+      SELECT p.id, STRING_AGG(DISTINCT r.name, ',') AS roles, STRING_AGG(DISTINCT cp.name, ',') AS children
+      FROM permissions p
+      LEFT JOIN permissions cp ON p.id = cp.pid AND cp.deleted = false
+      LEFT JOIN role_in_permission rp ON p.id = rp.permission_id
+      LEFT JOIN roles r ON rp.role_id = r.id AND r.deleted = false
+      WHERE p.deleted = false AND p.id = ${id}
+      GROUP BY p.id;
+    `;
 
-    if (!permission) {
+    if (!roleAndPermissions.length) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Permission does not exist',
       };
     }
 
-    if (permission.roleInPermission.length > 0) {
+    if (roleAndPermissions[0].roles) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
         message:
           'The permission has been assigned to the role and cannot be deleted',
       };
     }
 
-    if (permission.children.length > 0) {
+    if (roleAndPermissions[0].children) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
         message: 'The menu has submenus and cannot be deleted',
       };
     }
@@ -383,51 +376,40 @@ export class PermissionsService {
   }
 
   async batchRemove(ids: number[]) {
-    const permissions = await this.prismaService.permission.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-        deleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        roleInPermission: {
-          select: {
-            roleId: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
+    const roleAndPermissions: {
+      id: number;
+      roles?: string;
+      children?: string;
+    }[] = await this.prismaService.$queryRaw`
+      SELECT p.id, STRING_AGG(DISTINCT r.name, ',') AS roles, STRING_AGG(DISTINCT cp.name, ',') AS children
+      FROM permissions p
+      LEFT JOIN permissions cp ON p.id = cp.pid AND cp.deleted = false
+      LEFT JOIN role_in_permission rp ON p.id = rp.permission_id
+      LEFT JOIN roles r ON rp.role_id = r.id AND r.deleted = false
+      WHERE p.deleted = false AND p.id IN (${Prisma.join(ids)})
+      GROUP BY p.id;
+    `;
 
-    if (permissions.length !== ids.length) {
+    if (roleAndPermissions.length !== ids.length) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Some permissions do not exist',
       };
     }
 
-    const hasRole = permissions.some(
-      (item) => item.roleInPermission.length > 0,
-    );
+    const hasRole = roleAndPermissions.some((item) => item.roles);
     if (hasRole) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
         message:
           'Some permissions have been assigned to the role and cannot be deleted',
       };
     }
 
-    const hasChildren = permissions.some((item) => item.children.length > 0);
+    const hasChildren = roleAndPermissions.some((item) => item.children);
     if (hasChildren) {
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
         message: 'Some menus have submenus and cannot be deleted',
       };
     }
