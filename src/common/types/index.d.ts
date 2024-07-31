@@ -1,4 +1,4 @@
-import type { Permission } from '@prisma/client';
+import type { Permission, Profile } from '@prisma/client';
 
 export interface IUserPermission {
   user_name: string;
@@ -18,4 +18,16 @@ export interface IUserPermission {
   redirect: string;
   props: boolean;
   sort: number;
+}
+
+export interface IProfile {
+  user_name: string;
+  role_names?: string;
+  nick_name?: string;
+  avatar?: string;
+  birthday?: Profile['birthday'];
+  email?: string;
+  gender: Profile['gender'];
+  phone?: string;
+  description?: string;
 }

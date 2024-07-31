@@ -8,13 +8,18 @@ import {
   Delete,
   Query,
   UsePipes,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
 import { Permissions } from '../common/decorators/permission.decorator';
-import { UserListEntity, UserDetailEntity } from './entities/user.entity';
+import {
+  UserListEntity,
+  UserDetailEntity,
+  UserProfilesEntity,
+} from './entities/user.entity';
 import { NullResponseEntity } from '../common/entities/api-response.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -54,6 +59,17 @@ export class UsersController {
   )
   findAll(@Query() query: QueryUserDto): Promise<UserListEntity> {
     return this.usersService.findAll(query);
+  }
+
+  @ApiOperation({
+    summary: '获取当前用户信息',
+  })
+  @ApiBaseResponse(UserProfilesEntity)
+  @Get('profile')
+  findProfile(
+    @Req() req: { user: { userId: string } },
+  ): Promise<UserProfilesEntity | NullResponseEntity> {
+    return this.usersService.findProfile(req.user.userId);
   }
 
   @ApiOperation({

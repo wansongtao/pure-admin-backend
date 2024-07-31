@@ -9,6 +9,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { UserListItem } from './entities/user.entity';
+import type { IProfile } from '../common/types/index.d';
 
 @Injectable()
 export class UsersService {
@@ -291,5 +292,39 @@ export class UsersService {
       where: { id: { in: ids } },
       data: { deleted: true },
     });
+  }
+
+  async findProfile(id: string) {
+    const profile: IProfile[] = await this.prismaService.$queryRaw`
+      WITH user_base AS (SELECT id, user_name FROM users WHERE id = ${id})
+      SELECT ub.user_name, p.avatar, p.nick_name, p.birthday, p.description, p.email, p.gender, 
+      p.phone, COALESCE(string_agg(r.name, ','), '') AS role_names
+      FROM user_base ub
+      INNER JOIN profiles p ON ub.id = p.user_id
+      LEFT JOIN role_in_user ur ON ub.id = ur.user_id
+      LEFT JOIN roles r ON ur.role_id = r.id
+      GROUP BY ub.id, ub.user_name, p.id, p.avatar, p.nick_name, p.birthday, p.description, 
+      p.email, p.gender, p.phone;
+    `;
+
+    if (!profile || profile.length === 0) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'The user does not exist',
+      };
+    }
+
+    const userInfo = profile[0];
+    return {
+      userName: userInfo.user_name,
+      nickName: userInfo.nick_name,
+      roles: userInfo.role_names.split(','),
+      avatar: userInfo.avatar,
+      email: userInfo.email,
+      phone: userInfo.phone,
+      gender: userInfo.gender,
+      birthday: userInfo.birthday,
+      description: userInfo.description,
+    };
   }
 }
