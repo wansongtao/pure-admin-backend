@@ -1,7 +1,10 @@
 import { Controller, Get, Ip, Headers, Post, Body, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
+import { PasswordDto } from './dto/password.dto';
 import {
   AuthEntity,
   LoginEntity,
@@ -11,8 +14,6 @@ import {
   BaseResponseEntity,
   NullResponseEntity,
 } from '../common/entities/api-response.entity';
-import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
-import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -69,5 +70,18 @@ export class AuthController {
     @Req() req: { user: { userId: string } },
   ): Promise<UserInfoEntity | NullResponseEntity> {
     return this.authService.getUserInfo(req.user.userId);
+  }
+
+  @ApiOperation({
+    summary: '修改密码',
+  })
+  @ApiBearerAuth()
+  @ApiBaseResponse()
+  @Post('password')
+  updatePassword(
+    @Body() passwordDto: PasswordDto,
+    @Req() req: { user: { userId: string } },
+  ) {
+    return this.authService.updatePassword(passwordDto, req.user.userId);
   }
 }

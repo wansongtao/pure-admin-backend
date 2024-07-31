@@ -15,7 +15,7 @@ import {
   getPermissionsKey,
 } from '../common/config/redis.key';
 import { PrismaService } from 'nestjs-prisma';
-
+import { PasswordDto } from './dto/password.dto';
 import type { IUserPermission } from '../common/types';
 
 @Injectable()
@@ -247,5 +247,35 @@ export class AuthService {
     const userPermissions = results[0].permissions ?? [];
     this.savePermissionsToRedis(userId, userPermissions);
     return userPermissions;
+  }
+
+  async updatePassword(passwordDto: PasswordDto, userId: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: { password: true },
+    });
+    if (!user) {
+      return { statusCode: HttpStatus.NOT_FOUND, message: 'User not found' };
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      passwordDto.oldPassword,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'oldPassword is invalid',
+      };
+    }
+
+    const hashPassword = await bcrypt.hash(
+      passwordDto.newPassword,
+      +this.configService.get('BCRYPT_SALT_ROUNDS') || 10,
+    );
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { password: hashPassword },
+    });
   }
 }
