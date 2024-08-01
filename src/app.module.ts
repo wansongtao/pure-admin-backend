@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { PermissionGuard } from './common/guard/permission.guard';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { PermissionGuard } from './common/guard/permission.guard';
     UsersModule,
     PermissionsModule,
     RolesModule,
+    UploadModule,
   ],
   providers: [
     {
