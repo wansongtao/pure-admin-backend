@@ -1,5 +1,5 @@
 import { Profile } from '@prisma/client';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 export class ProfileEntity
   implements Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>
@@ -27,4 +27,17 @@ export class ProfileEntity
 
   @ApiProperty({ description: '用户描述', type: 'string' })
   description: Profile['description'];
+}
+
+export class ProfileItemEntity extends OmitType(ProfileEntity, [
+  'avatar',
+  'description',
+  'userId',
+  'gender',
+]) {
+  @ApiProperty({ description: '用户名', type: 'string' })
+  userName: string;
+
+  @ApiProperty({ description: '用户性别', type: 'string' })
+  gender: string;
 }

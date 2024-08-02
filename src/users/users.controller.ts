@@ -20,6 +20,7 @@ import {
   UserDetailEntity,
   UserProfilesEntity,
 } from './entities/user.entity';
+import { ProfileItemEntity } from './entities/profile.entity';
 import { NullResponseEntity } from '../common/entities/api-response.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -63,6 +64,16 @@ export class UsersController {
   }
 
   @ApiOperation({
+    summary: '导出用户列表',
+  })
+  @ApiBaseResponse(ProfileItemEntity, 'array')
+  @Permissions('system:user:export')
+  @Get('export')
+  exportAll(): Promise<ProfileItemEntity[] | NullResponseEntity> {
+    return this.usersService.exportAll();
+  }
+
+  @ApiOperation({
     summary: '获取当前用户信息',
   })
   @ApiBaseResponse(UserProfilesEntity)
@@ -71,6 +82,17 @@ export class UsersController {
     @Req() req: { user: { userId: string } },
   ): Promise<UserProfilesEntity | NullResponseEntity> {
     return this.usersService.findProfile(req.user.userId);
+  }
+
+  @ApiOperation({
+    summary: '获取用户详情',
+  })
+  @ApiBaseResponse(UserDetailEntity)
+  @Get(':id')
+  findOne(
+    @Param('id') id: string,
+  ): Promise<UserDetailEntity | NullResponseEntity> {
+    return this.usersService.findOne(id);
   }
 
   @ApiOperation({
@@ -83,17 +105,6 @@ export class UsersController {
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(req.user.userId, updateProfileDto);
-  }
-
-  @ApiOperation({
-    summary: '获取用户详情',
-  })
-  @ApiBaseResponse(UserDetailEntity)
-  @Get(':id')
-  findOne(
-    @Param('id') id: string,
-  ): Promise<UserDetailEntity | NullResponseEntity> {
-    return this.usersService.findOne(id);
   }
 
   @ApiOperation({

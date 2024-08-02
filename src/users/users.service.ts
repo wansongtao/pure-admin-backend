@@ -335,4 +335,50 @@ export class UsersService {
       data: profile,
     });
   }
+
+  async exportAll() {
+    const users = await this.prismaService.user.findMany({
+      where: { deleted: false },
+      select: {
+        userName: true,
+        profile: {
+          select: {
+            nickName: true,
+            phone: true,
+            email: true,
+            gender: true,
+            birthday: true,
+          },
+        },
+      },
+    });
+
+    if (!users || users.length === 0) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'No user data',
+      };
+    }
+
+    const data = users.map((user) => {
+      const profile = user.profile;
+      const gender =
+        profile.gender === 'FE'
+          ? '女'
+          : profile.gender === 'MA'
+            ? '男'
+            : '其他';
+
+      return {
+        userName: user.userName,
+        nickName: profile.nickName,
+        phone: profile.phone,
+        email: profile.email,
+        birthday: profile.birthday,
+        gender,
+      };
+    });
+
+    return data;
+  }
 }
