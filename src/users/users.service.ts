@@ -319,7 +319,7 @@ export class UsersService {
     return {
       userName: userInfo.user_name,
       nickName: userInfo.nick_name,
-      roles: userInfo.role_names.split(','),
+      roles: userInfo.role_names ? userInfo.role_names.split(',') : [],
       avatar: userInfo.avatar,
       email: userInfo.email,
       phone: userInfo.phone,
