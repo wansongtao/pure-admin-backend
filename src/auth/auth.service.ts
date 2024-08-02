@@ -250,6 +250,13 @@ export class AuthService {
   }
 
   async updatePassword(passwordDto: PasswordDto, userId: string) {
+    if (passwordDto.oldPassword === passwordDto.newPassword) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'oldPassword and newPassword cannot be the same',
+      };
+    }
+
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
       select: { password: true },
