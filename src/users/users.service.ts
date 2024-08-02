@@ -24,6 +24,10 @@ export class UsersService {
     return hash(password, +this.configService.get('BCRYPT_SALT_ROUNDS') || 10);
   }
 
+  private getDefaultPassword() {
+    return this.configService.get<string>('DEFAULT_PASSWORD') || 'd.123456';
+  }
+
   private async clearPermissionsCache(userId: string) {
     const key = getPermissionsKey(userId);
     const hasKey = await this.redis.exists(key);
@@ -60,7 +64,7 @@ export class UsersService {
       };
     }
 
-    const password = this.configService.get('DEFAULT_PASSWORD') || 'd.123456';
+    const password = this.getDefaultPassword();
     const hashedPassword = await this.generateHashPassword(password);
 
     await this.prismaService.user.create({
@@ -380,5 +384,32 @@ export class UsersService {
     });
 
     return data;
+  }
+
+  async resetPassword(id: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id, deleted: false },
+      select: { userName: true },
+    });
+    if (!user) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'The user does not exist',
+      };
+    }
+    if (this.isDefaultAdministrator(user.userName)) {
+      return {
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message: 'The super administrator cannot be reset password',
+      };
+    }
+
+    const defaultPassword = this.getDefaultPassword();
+    const password = await this.generateHashPassword(defaultPassword);
+
+    await this.prismaService.user.update({
+      where: { id },
+      data: { password },
+    });
   }
 }

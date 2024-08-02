@@ -27,6 +27,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ResetUserDto } from './dto/reset-user.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -135,5 +136,15 @@ export class UsersController {
   @Post('batch-delete')
   batchRemove(@Body() deleteUserDto: DeleteUserDto) {
     return this.usersService.batchRemove(deleteUserDto.ids);
+  }
+
+  @ApiOperation({
+    summary: '重置密码',
+  })
+  @ApiBaseResponse()
+  @Permissions('system:user:reset')
+  @Post('reset-password')
+  resetPassword(@Body() resetUserDto: ResetUserDto) {
+    return this.usersService.resetPassword(resetUserDto.id);
   }
 }
