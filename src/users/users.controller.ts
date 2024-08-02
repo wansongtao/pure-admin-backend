@@ -25,6 +25,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -70,6 +71,18 @@ export class UsersController {
     @Req() req: { user: { userId: string } },
   ): Promise<UserProfilesEntity | NullResponseEntity> {
     return this.usersService.findProfile(req.user.userId);
+  }
+
+  @ApiOperation({
+    summary: '更新当前用户信息',
+  })
+  @ApiBaseResponse()
+  @Patch('profile')
+  updateProfile(
+    @Req() req: { user: { userId: string } },
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(req.user.userId, updateProfileDto);
   }
 
   @ApiOperation({

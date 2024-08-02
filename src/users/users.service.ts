@@ -8,6 +8,7 @@ import { getPermissionsKey } from '../common/config/redis.key';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserListItem } from './entities/user.entity';
 import type { IProfile } from '../common/types/index.d';
 
@@ -326,5 +327,12 @@ export class UsersService {
       birthday: userInfo.birthday,
       description: userInfo.description,
     };
+  }
+
+  async updateProfile(id: string, profile: UpdateProfileDto) {
+    await this.prismaService.profile.update({
+      where: { userId: id },
+      data: profile,
+    });
   }
 }
