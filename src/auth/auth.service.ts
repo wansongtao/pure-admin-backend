@@ -16,6 +16,8 @@ import {
 } from '../common/config/redis.key';
 import { PrismaService } from 'nestjs-prisma';
 import { PasswordDto } from './dto/password.dto';
+import getSystemConfig from '../common/config';
+
 import type { IUserPermission } from '../common/types';
 
 @Injectable()
@@ -29,13 +31,11 @@ export class AuthService {
   ) {}
 
   getDefaultAdminPermission() {
-    const defaultPermission =
-      this.configService.get<string>('DEFAULT_SUPER_PERMISSION') || '*:*:*';
-    return defaultPermission;
+    return getSystemConfig(this.configService).DEFAULT_SUPER_PERMISSION;
   }
 
   isDefaultAdministrator(userName: string) {
-    const defaultName = this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
+    const defaultName = getSystemConfig(this.configService).DEFAULT_USERNAME;
     return userName === defaultName;
   }
 
@@ -44,7 +44,7 @@ export class AuthService {
     this.redis.sadd(permissionsKey, permissions);
     this.redis.expire(
       permissionsKey,
-      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+      getSystemConfig(this.configService).JWT_EXPIRES_IN,
     );
   }
 
@@ -57,7 +57,7 @@ export class AuthService {
     });
 
     const key = getCaptchaKey(ip, userAgent);
-    const expiresIn = +this.configService.get('CAPTCHA_EXPIRES_IN') || 120;
+    const expiresIn = getSystemConfig(this.configService).CAPTCHA_EXPIRES_IN;
     this.redis.set(key, captcha.text, 'EX', expiresIn);
 
     return {
@@ -107,7 +107,7 @@ export class AuthService {
       ssoKey,
       token,
       'EX',
-      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+      getSystemConfig(this.configService).JWT_EXPIRES_IN,
     );
     return { token };
   }
@@ -118,7 +118,7 @@ export class AuthService {
       blackListKey,
       '',
       'EX',
-      +this.configService.get('JWT_EXPIRES_IN') || 86400,
+      getSystemConfig(this.configService).JWT_EXPIRES_IN,
     );
   }
 
@@ -278,7 +278,7 @@ export class AuthService {
 
     const hashPassword = await bcrypt.hash(
       passwordDto.newPassword,
-      +this.configService.get('BCRYPT_SALT_ROUNDS') || 10,
+      getSystemConfig(this.configService).BCRYPT_SALT_ROUNDS,
     );
     await this.prismaService.user.update({
       where: { id: userId },

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import getSystemConfig from './common/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ResponseInterceptor } from './common/interceptor/response.interceptor';
 import { ValidationPipe } from '@nestjs/common';
@@ -12,13 +13,14 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new ResponseExceptionFilter());
 
-  const projectConfig = app.get(ConfigService);
-  const prefix = projectConfig.get<string>('PREFIX');
+  const systemConfig = getSystemConfig(app.get(ConfigService));
+
+  const prefix = systemConfig.PREFIX;
   app.setGlobalPrefix(prefix);
 
-  const title = projectConfig.get<string>('SWAGGER_TITLE');
-  const description = projectConfig.get<string>('SWAGGER_DESCRIPTION');
-  const version = projectConfig.get<string>('SWAGGER_VERSION');
+  const title = systemConfig.SWAGGER_TITLE;
+  const description = systemConfig.SWAGGER_DESCRIPTION;
+  const version = systemConfig.SWAGGER_VERSION;
   const swaggerConfig = new DocumentBuilder()
     .setTitle(title)
     .setDescription(description)
@@ -28,7 +30,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);
 
-  const port = projectConfig.get<number>('PORT');
-  await app.listen(port);
+  await app.listen(systemConfig.PORT);
 }
 bootstrap();

@@ -10,6 +10,7 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { PermissionGuard } from './common/guard/permission.guard';
 import { UploadModule } from './upload/upload.module';
+import getSystemConfig from './common/config';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { UploadModule } from './upload/upload.module';
           prismaOptions: {
             datasources: {
               db: {
-                url: configService.get<string>('DATABASE_URL'),
+                url: getSystemConfig(configService).DATABASE_URL,
               },
             },
           },
@@ -37,7 +38,7 @@ import { UploadModule } from './upload/upload.module';
     RedisModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         type: 'single',
-        url: configService.get<string>('REDIS_URL'),
+        url: getSystemConfig(configService).REDIS_URL,
       }),
       inject: [ConfigService],
     }),

@@ -9,6 +9,7 @@ import Redis from 'ioredis';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { getSSOKey } from '../common/config/redis.key';
+import getSystemConfig from '../common/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRedis() private readonly redis: Redis,
   ) {
     const staticPath = join(__dirname, '../../');
-    const publicKeyPath = configService.get<string>('JWT_PUBLIC_KEY');
+    const publicKeyPath = getSystemConfig(configService).JWT_PUBLIC_KEY;
     const publicKey = readFileSync(join(staticPath, publicKeyPath));
 
     const options: StrategyOptionsWithRequest = {

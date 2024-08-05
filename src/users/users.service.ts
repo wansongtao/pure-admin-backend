@@ -10,6 +10,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserListItem } from './entities/user.entity';
+import getSystemConfig from '../common/config';
+
 import type { IProfile } from '../common/types/index.d';
 
 @Injectable()
@@ -21,11 +23,14 @@ export class UsersService {
   ) {}
 
   private generateHashPassword(password: string) {
-    return hash(password, +this.configService.get('BCRYPT_SALT_ROUNDS') || 10);
+    return hash(
+      password,
+      getSystemConfig(this.configService).BCRYPT_SALT_ROUNDS,
+    );
   }
 
   private getDefaultPassword() {
-    return this.configService.get<string>('DEFAULT_PASSWORD') || 'd.123456';
+    return getSystemConfig(this.configService).DEFAULT_PASSWORD;
   }
 
   private async clearPermissionsCache(userId: string) {
@@ -37,7 +42,7 @@ export class UsersService {
   }
 
   isDefaultAdministrator(userName: string) {
-    const defaultName = this.configService.get('DEFAULT_USERNAME') || 'sAdmin';
+    const defaultName = getSystemConfig(this.configService).DEFAULT_USERNAME;
     return userName === defaultName;
   }
 
