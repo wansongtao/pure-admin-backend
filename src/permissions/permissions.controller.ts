@@ -48,16 +48,13 @@ export class PermissionsController {
 
   @ApiOperation({ summary: '获取权限树' })
   @ApiQuery({ name: 'containButton', type: Boolean, required: false })
-  @ApiQuery({ name: 'containDisabled', type: Boolean, required: false })
   @ApiBaseResponse(PermissionTreeEntity, 'array')
   @Get('tree')
   findTree(
     @Query('containButton', new DefaultValuePipe(false), ParseBoolPipe)
     containButton: boolean,
-    @Query('containDisabled', new DefaultValuePipe(false), ParseBoolPipe)
-    containDisabled: boolean,
   ): Promise<PermissionTreeEntity[]> {
-    return this.permissionsService.findTree(containButton, containDisabled);
+    return this.permissionsService.findTree(containButton);
   }
 
   @ApiOperation({ summary: '获取权限列表' })
