@@ -1,20 +1,14 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { generateMenus } from '../common/utils/index';
-import { Prisma } from '@prisma/client';
-import { getPermissionsKey } from '../common/config/redis.key';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
+import { Prisma, Permission } from '@prisma/client';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { QueryPermissionDto } from './dto/query-permission.dto';
 
 @Injectable()
 export class PermissionsService {
-  constructor(
-    private readonly prismaService: PrismaService,
-    @InjectRedis() private readonly redis: Redis,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   private async validatePermission(permissionDto: CreatePermissionDto) {
     if (permissionDto.type !== 'BUTTON' && !permissionDto.path) {
@@ -97,31 +91,6 @@ export class PermissionsService {
         message: 'Only buttons can be added under the menu',
       };
     }
-  }
-
-  private async changePermissionsCache(
-    deletePermission: string,
-    updatePermission?: string,
-    mode: 'update' | 'delete' = 'update',
-  ) {
-    const prefix = getPermissionsKey('');
-    const keys = await this.redis.keys(`${prefix}*`);
-    keys.forEach(async (key) => {
-      const permissions = await this.redis.smembers(key);
-      if (!permissions.includes(deletePermission)) {
-        return;
-      }
-
-      if (mode === 'delete') {
-        this.redis.del(key);
-        return;
-      }
-
-      this.redis.srem(key, deletePermission);
-      if (updatePermission) {
-        this.redis.sadd(key, updatePermission);
-      }
-    });
   }
 
   async create(createPermissionDto: CreatePermissionDto) {
@@ -224,94 +193,111 @@ export class PermissionsService {
   }
 
   async update(id: number, updatePermissionDto: UpdatePermissionDto) {
-    const permission = await this.prismaService.permission.findUnique({
-      where: {
-        id,
-        deleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        permission: true,
-        type: true,
-      },
-    });
-
-    if (!permission) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: 'Permission does not exist',
-      };
-    }
-    if (permission.id === updatePermissionDto.pid) {
+    if (id === updatePermissionDto.pid) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'The parent menu cannot be itself',
       };
     }
 
-    if (
-      updatePermissionDto.name ||
-      updatePermissionDto.permission ||
-      updatePermissionDto.pid
-    ) {
-      const otherPermission = await this.prismaService.permission.findFirst({
-        where: {
-          id: {
-            not: id,
-          },
-          OR: [
-            {
-              id: updatePermissionDto.pid ?? undefined,
-            },
-            {
-              name: updatePermissionDto.name,
-            },
-            {
-              permission: updatePermissionDto.permission,
-            },
-          ],
-        },
-        select: {
-          type: true,
-          name: true,
-          permission: true,
-        },
-      });
+    let whereCondition = `(p.deleted = false AND p.id = ${id})`;
+    if (updatePermissionDto.pid) {
+      whereCondition += ` OR p.id = ${updatePermissionDto.pid}`;
+    }
+    if (updatePermissionDto.name) {
+      whereCondition += ` OR p.name = '${updatePermissionDto.name}'`;
+    }
+    if (updatePermissionDto.permission) {
+      whereCondition += ` OR p.permission = '${updatePermissionDto.permission}'`;
+    }
 
-      if (otherPermission) {
-        if (otherPermission.name === updatePermissionDto.name) {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: 'The menu name already exists',
-          };
-        }
+    const permissions: {
+      id: number;
+      name: string;
+      type: Permission['type'];
+      permission?: string;
+      role_names?: string;
+    }[] = await this.prismaService.$queryRawUnsafe(`
+      SELECT p.id, p.name, p.type, p.permission, STRING_AGG(r.name, ',') as role_names
+      FROM permissions p
+      LEFT JOIN role_in_permission rp ON p.id = rp.permission_id
+      LEFT JOIN roles r ON rp.role_id = r.id AND r.deleted = false AND r.disabled = false
+      WHERE ${whereCondition}
+      GROUP BY p.id  
+    `);
 
-        if (otherPermission.permission === updatePermissionDto.permission) {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: 'The permission identifier already exists',
-          };
-        }
-
-        if (otherPermission.type === 'BUTTON') {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: 'The parent menu cannot be a button',
-          };
-        }
-
-        if (otherPermission.type === 'MENU' && permission.type !== 'BUTTON') {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: 'Only buttons can be added under the menu',
-          };
-        }
-      }
+    const permission = permissions.find((item) => item.id === id);
+    if (!permission) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Permission does not exist',
+      };
     }
 
     if (updatePermissionDto.sort === null) {
       updatePermissionDto.sort = 0;
+    }
+
+    const blackList = ['pid', 'type', 'name', 'permission', 'disabled'];
+    if (
+      !Object.keys(updatePermissionDto).some((key) => blackList.includes(key))
+    ) {
+      await this.prismaService.permission.update({
+        where: {
+          id,
+        },
+        data: updatePermissionDto,
+      });
+      return;
+    }
+
+    if (permission.role_names) {
+      return {
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message:
+          'The permission has been assigned to the role and cannot be modified',
+      };
+    }
+    if (
+      updatePermissionDto.name &&
+      permissions.some(
+        (item) => item.name === updatePermissionDto.name && item.id !== id,
+      )
+    ) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The menu name already exists',
+      };
+    }
+    if (
+      updatePermissionDto.permission &&
+      permissions.some(
+        (item) =>
+          item.permission === updatePermissionDto.permission && item.id !== id,
+      )
+    ) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'The permission identifier already exists',
+      };
+    }
+    if (updatePermissionDto.pid) {
+      const parentPermission = permissions.find(
+        (item) => item.id === updatePermissionDto.pid,
+      );
+
+      if (!parentPermission) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'The parent menu does not exist',
+        };
+      }
+      if (parentPermission.type === 'BUTTON') {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'The parent menu cannot be a button',
+        };
+      }
     }
 
     await this.prismaService.permission.update({
@@ -320,15 +306,6 @@ export class PermissionsService {
       },
       data: updatePermissionDto,
     });
-
-    if (updatePermissionDto.disabled) {
-      this.changePermissionsCache(permission.permission, '', 'delete');
-    } else if (updatePermissionDto.permission !== undefined) {
-      this.changePermissionsCache(
-        permission.permission,
-        updatePermissionDto.permission,
-      );
-    }
   }
 
   async remove(id: number) {
