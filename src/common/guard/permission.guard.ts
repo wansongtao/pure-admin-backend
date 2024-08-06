@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSION_KEY } from '../decorators/permission.decorator';
 import { AuthService } from '../../auth/auth.service';
+import { IPayload } from '../types';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -20,7 +21,7 @@ export class PermissionGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const user = request.user as { userId: string; userName: string };
+    const user: IPayload = request.user;
     const userPermissions = await this.authService.findUserPermissions(
       user.userId,
     );
