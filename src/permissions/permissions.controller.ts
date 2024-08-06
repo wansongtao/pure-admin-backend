@@ -13,7 +13,12 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Permissions } from '../common/decorators/permission.decorator';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { ParseQueryPipe } from '../common/pipe/parse-query.pipe';
@@ -42,13 +47,17 @@ export class PermissionsController {
   }
 
   @ApiOperation({ summary: '获取权限树' })
+  @ApiQuery({ name: 'containButton', type: Boolean, required: false })
+  @ApiQuery({ name: 'containDisabled', type: Boolean, required: false })
   @ApiBaseResponse(PermissionTreeEntity, 'array')
   @Get('tree')
   findTree(
     @Query('containButton', new DefaultValuePipe(false), ParseBoolPipe)
     containButton: boolean,
+    @Query('containDisabled', new DefaultValuePipe(false), ParseBoolPipe)
+    containDisabled: boolean,
   ): Promise<PermissionTreeEntity[]> {
-    return this.permissionsService.findTree(containButton);
+    return this.permissionsService.findTree(containButton, containDisabled);
   }
 
   @ApiOperation({ summary: '获取权限列表' })

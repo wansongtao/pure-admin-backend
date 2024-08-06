@@ -406,15 +406,17 @@ export class PermissionsService {
     });
   }
 
-  async findTree(containButton: boolean) {
+  async findTree(containButton: boolean, containDisabled: boolean) {
     const whereCondition: Prisma.PermissionWhereInput = {
-      disabled: false,
       deleted: false,
     };
     if (!containButton) {
       whereCondition.type = {
         not: 'BUTTON',
       };
+    }
+    if (!containDisabled) {
+      whereCondition.disabled = false;
     }
 
     const permissions = await this.prismaService.permission.findMany({
