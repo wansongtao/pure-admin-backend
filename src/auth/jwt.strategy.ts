@@ -40,8 +40,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const user = await this.usersService.validateUser(payload.userName);
-    if (!user) {
+    const user = await this.usersService.findOne(payload.userId);
+    if (!user || user?.statusCode > 200 || (user as any).disabled) {
       throw new UnauthorizedException('No user found');
     }
 

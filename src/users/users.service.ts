@@ -46,17 +46,6 @@ export class UsersService {
     return userName === defaultName;
   }
 
-  async validateUser(userName: string) {
-    return this.prismaService.user.findFirst({
-      where: {
-        userName,
-        deleted: false,
-        disabled: false,
-      },
-      select: { id: true, userName: true, password: true },
-    });
-  }
-
   async create(createUserDto: CreateUserDto) {
     const user = await this.prismaService.user.findUnique({
       where: { userName: createUserDto.userName },

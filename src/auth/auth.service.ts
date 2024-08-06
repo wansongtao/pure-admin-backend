@@ -2,7 +2,6 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
@@ -26,7 +25,6 @@ export class AuthService {
     private readonly configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
     private readonly prismaService: PrismaService,
   ) {}
 
@@ -90,7 +88,10 @@ export class AuthService {
       return { statusCode: 400, message: 'Captcha is invalid' };
     }
 
-    const user = await this.usersService.validateUser(userName);
+    const user = await this.prismaService.user.findUnique({
+      where: { userName, deleted: false, disabled: false },
+      select: { id: true, userName: true, password: true },
+    });
     if (!user) {
       return { statusCode: 400, message: 'UserName is invalid' };
     }
