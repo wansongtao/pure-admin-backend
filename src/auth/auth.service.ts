@@ -17,7 +17,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { PasswordDto } from './dto/password.dto';
 import getSystemConfig from '../common/config';
 
-import type { IUserPermission } from '../common/types';
+import type { IPayload, IUserPermission } from '../common/types';
 
 @Injectable()
 export class AuthService {
@@ -90,7 +90,7 @@ export class AuthService {
 
     const user = await this.prismaService.user.findUnique({
       where: { userName, deleted: false, disabled: false },
-      select: { id: true, userName: true, password: true },
+      select: { id: true, password: true },
     });
     if (!user) {
       return { statusCode: 400, message: 'UserName is invalid' };
@@ -101,7 +101,7 @@ export class AuthService {
       return { statusCode: 400, message: 'Password is invalid' };
     }
 
-    const payload = { userId: user.id, userName: user.userName };
+    const payload: IPayload = { userId: user.id };
     const token = this.jwtService.sign(payload, { algorithm: 'RS256' });
     const ssoKey = getSSOKey(user.id);
     this.redis.set(

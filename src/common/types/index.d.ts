@@ -1,5 +1,9 @@
 import type { Permission, Profile } from '@prisma/client';
 
+export interface IPayload {
+  userId: string;
+}
+
 export interface IUserPermission {
   user_name: string;
   nick_name?: string;

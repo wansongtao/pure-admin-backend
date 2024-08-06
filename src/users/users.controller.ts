@@ -29,6 +29,8 @@ import { DeleteUserDto } from './dto/delete-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResetUserDto } from './dto/reset-user.dto';
 
+import type { IPayload } from '../common/types';
+
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
@@ -80,7 +82,7 @@ export class UsersController {
   @ApiBaseResponse(UserProfilesEntity)
   @Get('profile')
   findProfile(
-    @Req() req: { user: { userId: string } },
+    @Req() req: { user: IPayload },
   ): Promise<UserProfilesEntity | NullResponseEntity> {
     return this.usersService.findProfile(req.user.userId);
   }
@@ -102,7 +104,7 @@ export class UsersController {
   @ApiBaseResponse()
   @Patch('profile')
   updateProfile(
-    @Req() req: { user: { userId: string } },
+    @Req() req: { user: IPayload },
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(req.user.userId, updateProfileDto);

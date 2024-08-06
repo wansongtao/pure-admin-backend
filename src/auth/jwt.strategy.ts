@@ -11,6 +11,8 @@ import { join } from 'path';
 import { getSSOKey } from '../common/config/redis.key';
 import getSystemConfig from '../common/config';
 
+import type { IPayload } from '../common/types';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -32,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super(options);
   }
 
-  async validate(req: Request, payload: { userId: string; userName: string }) {
+  async validate(req: Request, payload: IPayload) {
     const token = req.headers.authorization.split(' ')[1];
     const ssoKey = getSSOKey(payload.userId);
     const validToken = await this.redis.get(ssoKey);
@@ -45,6 +47,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('No user found');
     }
 
-    return { userId: payload.userId, userName: payload.userName };
+    return { userId: payload.userId };
   }
 }

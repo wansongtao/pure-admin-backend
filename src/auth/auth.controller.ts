@@ -15,6 +15,8 @@ import {
   NullResponseEntity,
 } from '../common/entities/api-response.entity';
 
+import type { IPayload } from '../common/types';
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -67,7 +69,7 @@ export class AuthController {
   @ApiBaseResponse(UserInfoEntity)
   @Get('userinfo')
   getUserInfo(
-    @Req() req: { user: { userId: string } },
+    @Req() req: { user: IPayload },
   ): Promise<UserInfoEntity | NullResponseEntity> {
     return this.authService.getUserInfo(req.user.userId);
   }
@@ -80,7 +82,7 @@ export class AuthController {
   @Post('password')
   updatePassword(
     @Body() passwordDto: PasswordDto,
-    @Req() req: { user: { userId: string } },
+    @Req() req: { user: IPayload },
   ) {
     return this.authService.updatePassword(passwordDto, req.user.userId);
   }
