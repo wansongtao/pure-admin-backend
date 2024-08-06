@@ -1,8 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
-import { getPermissionsKey } from '../common/config/redis.key';
 import { Prisma } from '@prisma/client';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -10,20 +7,7 @@ import { QueryRoleDto } from './dto/query-role.dto';
 
 @Injectable()
 export class RolesService {
-  constructor(
-    private readonly prismaService: PrismaService,
-    @InjectRedis() private readonly redis: Redis,
-  ) {}
-
-  private clearPermissionsCache(userIds: string[]) {
-    userIds.forEach(async (userId) => {
-      const key = getPermissionsKey(userId);
-      const hasKey = await this.redis.exists(key);
-      if (hasKey) {
-        this.redis.del(key);
-      }
-    });
-  }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async create(createRoleDto: CreateRoleDto) {
     const role = await this.prismaService.role.findUnique({
@@ -139,36 +123,20 @@ export class RolesService {
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto) {
-    if (id === 1) {
-      return {
-        statusCode: HttpStatus.NOT_ACCEPTABLE,
-        message: 'The default administrator role cannot be modified',
-      };
+    let whereCondition = `WHERE (r.id = ${id} AND r.deleted = false)`;
+    if (updateRoleDto.name) {
+      whereCondition += ` OR r.name = '${updateRoleDto.name}'`;
     }
 
-    const whereCondition: Prisma.RoleWhereInput = {
-      OR: [
-        {
-          id,
-          deleted: false,
-        },
-      ],
-    };
-    if (updateRoleDto.name) {
-      whereCondition.OR.push({
-        name: updateRoleDto.name,
-      });
-    }
-    const roles = await this.prismaService.role.findMany({
-      where: whereCondition,
-      select: {
-        roleInUser: {
-          select: {
-            userId: true,
-          },
-        },
-      },
-    });
+    const roles: { user_names?: string }[] = await this.prismaService
+      .$queryRawUnsafe(`
+      SELECT r.name, STRING_AGG(u.user_name, '') AS user_names
+      FROM roles r
+      LEFT JOIN role_in_user ur ON ur.role_id = r.id
+      LEFT JOIN users u ON u.id = ur.user_id AND u.deleted = false AND u.disabled = false
+      ${whereCondition}
+      GROUP BY r.name
+    `);
 
     if (!roles.length) {
       return {
@@ -180,6 +148,13 @@ export class RolesService {
       return {
         statusCode: HttpStatus.CONFLICT,
         message: 'The name already exists',
+      };
+    }
+    if (roles[0].user_names) {
+      return {
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message:
+          'The role has been assigned to the user and cannot be modified',
       };
     }
 
@@ -208,17 +183,6 @@ export class RolesService {
       },
       data,
     });
-
-    const role = roles[0];
-    if (
-      role.roleInUser.length &&
-      (updateRoleDto.disabled !== undefined ||
-        updateRoleDto.permissions !== undefined)
-    ) {
-      this.clearPermissionsCache(
-        role.roleInUser.map((roleInUser) => roleInUser.userId),
-      );
-    }
   }
 
   async remove(id: number) {
