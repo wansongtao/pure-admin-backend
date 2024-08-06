@@ -85,7 +85,10 @@ export class AuthService {
   ) {
     const isCaptchaValid = await this.verifyCaptcha(ip, userAgent, captcha);
     if (!isCaptchaValid) {
-      return { statusCode: 400, message: 'Captcha is invalid' };
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Captcha is invalid',
+      };
     }
 
     const user = await this.prismaService.user.findUnique({
@@ -93,12 +96,18 @@ export class AuthService {
       select: { id: true, password: true },
     });
     if (!user) {
-      return { statusCode: 400, message: 'UserName is invalid' };
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'UserName is invalid',
+      };
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return { statusCode: 400, message: 'Password is invalid' };
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Password is invalid',
+      };
     }
 
     const payload: IPayload = { userId: user.id };
