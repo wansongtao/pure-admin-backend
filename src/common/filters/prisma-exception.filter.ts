@@ -8,9 +8,17 @@ import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 import { BaseResponseEntity } from '../entities/api-response.entity';
 
-@Catch(Prisma.PrismaClientKnownRequestError)
+@Catch(
+  Prisma.PrismaClientKnownRequestError,
+  Prisma.PrismaClientUnknownRequestError,
+)
 export class PrismaClientExceptionFilter implements ExceptionFilter {
-  catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
+  catch(
+    exception:
+      | Prisma.PrismaClientKnownRequestError
+      | Prisma.PrismaClientUnknownRequestError,
+    host: ArgumentsHost,
+  ) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
@@ -19,6 +27,12 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
       data: null,
       message: 'Internal server error',
     };
+
+    if (exception instanceof Prisma.PrismaClientUnknownRequestError) {
+      result.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+      result.message = exception.message;
+      return response.status(result.statusCode).json(result);
+    }
 
     switch (exception.code) {
       case 'P2002':
