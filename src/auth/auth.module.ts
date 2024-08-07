@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from '../users/users.module';
@@ -27,7 +27,7 @@ import getSystemConfig from '../common/config';
           join(staticPath, systemConfig.JWT_PUBLIC_KEY),
         );
 
-        const options = {
+        const options: JwtModuleOptions = {
           signOptions: {
             expiresIn: systemConfig.JWT_EXPIRES_IN,
           },
