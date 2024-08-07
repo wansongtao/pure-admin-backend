@@ -257,7 +257,7 @@ export class RolesService {
     });
   }
 
-  findAllRoles() {
+  findValidRoles() {
     return this.prismaService.role.findMany({
       where: {
         disabled: false,

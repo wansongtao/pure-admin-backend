@@ -62,11 +62,11 @@ export class RolesController {
     return this.rolesService.findAll(query);
   }
 
-  @ApiOperation({ summary: '获取所有角色' })
+  @ApiOperation({ summary: '获取所有有效角色' })
   @ApiBaseResponse(PickType(RoleEntity, ['id', 'name']), 'array')
-  @Get('all')
-  findAllRoles() {
-    return this.rolesService.findAllRoles();
+  @Get('tree')
+  findValidRoles() {
+    return this.rolesService.findValidRoles();
   }
 
   @ApiOperation({ summary: '获取角色详情' })
