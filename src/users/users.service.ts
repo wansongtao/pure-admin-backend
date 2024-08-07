@@ -13,6 +13,7 @@ import { UserListItem } from './entities/user.entity';
 import getSystemConfig from '../common/config';
 
 import type { IProfile } from '../common/types/index.d';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -217,24 +218,31 @@ export class UsersService {
       }
     }
 
-    await this.prismaService.user.update({
-      where: { id, deleted: false },
-      data: {
-        disabled: updateUserDto.disabled,
-        profile: {
-          update: {
-            nickName: updateUserDto.nickName,
-          },
-        },
-        roleInUser: updateUserDto.roles && {
-          deleteMany: {},
-          createMany: {
-            data: updateUserDto.roles.map((roleId) => ({
-              roleId,
-            })),
-          },
+    const data: Prisma.UserUpdateInput = {
+      disabled: updateUserDto.disabled,
+      profile: {
+        update: {
+          nickName: updateUserDto.nickName,
         },
       },
+    };
+    if (updateUserDto.roles || updateUserDto.roles === null) {
+      data.roleInUser = {
+        deleteMany: {},
+      };
+
+      if (updateUserDto.roles.length) {
+        data.roleInUser.createMany = {
+          data: updateUserDto.roles.map((roleId) => ({
+            roleId,
+          })),
+        };
+      }
+    }
+
+    await this.prismaService.user.update({
+      where: { id, deleted: false },
+      data,
     });
 
     if (updateUserDto.roles) {
