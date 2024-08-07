@@ -110,15 +110,14 @@ export class AuthService {
       };
     }
 
+    const config = getSystemConfig(this.configService);
+
     const payload: IPayload = { userId: user.id };
-    const token = this.jwtService.sign(payload, { algorithm: 'RS256' });
+    const token = this.jwtService.sign(payload, {
+      algorithm: config.JWT_ALGORITHM,
+    });
     const ssoKey = getSSOKey(user.id);
-    this.redis.set(
-      ssoKey,
-      token,
-      'EX',
-      getSystemConfig(this.configService).JWT_EXPIRES_IN,
-    );
+    this.redis.set(ssoKey, token, 'EX', config.JWT_EXPIRES_IN);
     return { token };
   }
 

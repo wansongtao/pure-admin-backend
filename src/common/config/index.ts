@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import type { JwtSignOptions } from '@nestjs/jwt';
 
 interface ISystemConfig {
   readonly PREFIX: string;
@@ -11,6 +12,7 @@ interface ISystemConfig {
   readonly SWAGGER_VERSION: string;
   readonly DATABASE_URL: string;
   readonly REDIS_URL: string;
+  readonly JWT_ALGORITHM: JwtSignOptions['algorithm'];
   readonly JWT_PUBLIC_KEY: string;
   readonly JWT_PRIVATE_KEY: string;
   readonly JWT_EXPIRES_IN: number;
@@ -44,6 +46,8 @@ const getSystemConfig = (configService: ConfigService) => {
     SWAGGER_VERSION: configService.get<string>('SWAGGER_VERSION') || '1.0',
     DATABASE_URL: configService.get<string>('DATABASE_URL') || '',
     REDIS_URL: configService.get<string>('REDIS_URL') || '',
+    JWT_ALGORITHM: (configService.get<string>('JWT_ALGORITHM') ||
+      'RS256') as JwtSignOptions['algorithm'],
     JWT_PUBLIC_KEY: configService.get<string>('JWT_PUBLIC_KEY') || '',
     JWT_PRIVATE_KEY: configService.get<string>('JWT_PRIVATE_KEY') || '',
     JWT_EXPIRES_IN: +configService.get<number>('JWT_EXPIRES_IN') || 86400,
