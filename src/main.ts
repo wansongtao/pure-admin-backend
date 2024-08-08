@@ -7,9 +7,11 @@ import { ResponseInterceptor } from './common/interceptor/response.interceptor';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseExceptionFilter } from './common/filters/response-exception.filter';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-exception.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(
