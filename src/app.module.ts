@@ -11,6 +11,7 @@ import { RolesModule } from './roles/roles.module';
 import { PermissionGuard } from './common/guard/permission.guard';
 import { UploadModule } from './upload/upload.module';
 import getSystemConfig from './common/config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -42,6 +43,16 @@ import getSystemConfig from './common/config';
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: getSystemConfig(config).THROTTLE_TTL,
+          limit: getSystemConfig(config).THROTTLE_LIMIT,
+        },
+      ],
+    }),
     AuthModule,
     UsersModule,
     PermissionsModule,
@@ -49,6 +60,10 @@ import getSystemConfig from './common/config';
     UploadModule,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

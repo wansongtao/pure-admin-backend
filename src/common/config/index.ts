@@ -25,6 +25,8 @@ interface ISystemConfig {
   readonly MINIO_SECRET_KEY: string;
   readonly MINIO_BUCKET_NAME: string;
   readonly MINIO_EXPIRES_IN: number;
+  readonly THROTTLE_TTL: number;
+  readonly THROTTLE_LIMIT: number;
 }
 
 let config: ISystemConfig | null = null;
@@ -60,6 +62,8 @@ const getSystemConfig = (configService: ConfigService) => {
     MINIO_SECRET_KEY: configService.get<string>('MINIO_SECRET_KEY') || '',
     MINIO_BUCKET_NAME: configService.get<string>('MINIO_BUCKET_NAME') || '',
     MINIO_EXPIRES_IN: +configService.get<number>('MINIO_EXPIRES_IN') || 120,
+    THROTTLE_TTL: +configService.get<number>('THROTTLE_TTL') || 10000,
+    THROTTLE_LIMIT: +configService.get<number>('THROTTLE_LIMIT') || 20,
   };
 
   return config;
