@@ -1,5 +1,5 @@
 {
-  "name": "admin-pure-server",
+  "name": "pure-admin-backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -36,19 +36,25 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.3.1",
+    "@nestjs/terminus": "^10.2.3",
+    "@nestjs/throttler": "^6.0.0",
     "@prisma/client": "5.14.0",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "helmet": "^7.1.0",
     "ioredis": "^5.4.1",
     "minio": "^8.0.1",
+    "nest-winston": "^1.9.7",
     "nestjs-prisma": "^0.23.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "svg-captcha": "^1.4.0",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "winston": "^3.13.1",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

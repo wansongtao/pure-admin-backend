@@ -1,5 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import {
+  WinstonModule,
+  utilities as nestWinstonModuleUtilities,
+} from 'nest-winston';
+import * as winston from 'winston';
+import * as DailyRotateFile from 'winston-daily-rotate-file';
+import * as path from 'path';
 import { PrismaModule } from 'nestjs-prisma';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +26,65 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
       isGlobal: true,
       cache: true,
+    }),
+    WinstonModule.forRootAsync({
+      useFactory: (configService: ConfigService) => {
+        const config = getSystemConfig(configService);
+        const datePattern = config.LOG_DATE_PATTERN;
+        const maxSize = config.LOG_MAX_SIZE;
+        const maxFiles = config.LOG_MAX_FILES;
+
+        return {
+          levels: winston.config.syslog.levels,
+          level: config.LOG_LEVEL,
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.ms(),
+            nestWinstonModuleUtilities.format.nestLike('MyApp', {
+              prettyPrint: true,
+              colors: true,
+            }),
+            winston.format.errors({ stack: true }),
+          ),
+          transports: [
+            new winston.transports.Console({
+              format: winston.format.combine(
+                winston.format.timestamp(),
+                nestWinstonModuleUtilities.format.nestLike(),
+              ),
+            }),
+            new DailyRotateFile({
+              dirname: path.join(config.LOG_DIR, config.LOG_LEVEL),
+              filename: 'application-%DATE%.log',
+              datePattern,
+              zippedArchive: true,
+              maxSize,
+              maxFiles,
+              level: config.LOG_LEVEL,
+            }),
+            new DailyRotateFile({
+              dirname: path.join(config.LOG_DIR, 'error'),
+              filename: 'error-%DATE%.log',
+              datePattern,
+              zippedArchive: true,
+              maxSize,
+              maxFiles,
+              level: 'error',
+            }),
+          ],
+          exceptionHandlers: [
+            new DailyRotateFile({
+              dirname: path.join(config.LOG_DIR, 'exceptions'),
+              filename: 'exceptions-%DATE%.log',
+              datePattern,
+              zippedArchive: true,
+              maxSize,
+              maxFiles,
+            }),
+          ],
+        };
+      },
+      inject: [ConfigService],
     }),
     PrismaModule.forRootAsync({
       isGlobal: true,

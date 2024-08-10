@@ -27,6 +27,11 @@ interface ISystemConfig {
   readonly MINIO_EXPIRES_IN: number;
   readonly THROTTLE_TTL: number;
   readonly THROTTLE_LIMIT: number;
+  readonly LOG_LEVEL: string;
+  readonly LOG_DIR: string;
+  readonly LOG_MAX_SIZE: string;
+  readonly LOG_MAX_FILES: string;
+  readonly LOG_DATE_PATTERN: string;
 }
 
 let config: ISystemConfig | null = null;
@@ -64,6 +69,12 @@ const getSystemConfig = (configService: ConfigService) => {
     MINIO_EXPIRES_IN: +configService.get<number>('MINIO_EXPIRES_IN') || 120,
     THROTTLE_TTL: +configService.get<number>('THROTTLE_TTL') || 10000,
     THROTTLE_LIMIT: +configService.get<number>('THROTTLE_LIMIT') || 20,
+    LOG_LEVEL: configService.get<string>('LOG_LEVEL') || 'info',
+    LOG_DIR: configService.get<string>('LOG_DIR') || 'logs',
+    LOG_MAX_SIZE: configService.get<string>('LOG_MAX_SIZE') || '20m',
+    LOG_MAX_FILES: configService.get<string>('LOG_MAX_FILES') || '14d',
+    LOG_DATE_PATTERN:
+      configService.get<string>('LOG_DATE_PATTERN') || 'YYYY-MM-DD',
   };
 
   return config;

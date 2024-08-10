@@ -5,18 +5,25 @@ import getSystemConfig from './common/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ResponseInterceptor } from './common/interceptor/response.interceptor';
 import { ValidationPipe } from '@nestjs/common';
-import { ResponseExceptionFilter } from './common/filters/response-exception.filter';
-import { PrismaClientExceptionFilter } from './common/filters/prisma-exception.filter';
 import helmet from 'helmet';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { AllExceptionsFilter } from './common/filters/all-exception.filter';
+import { HttpAdapterHost } from '@nestjs/core';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
   app.use(helmet());
+
+  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  app.useLogger(logger);
+
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe());
+
   app.useGlobalFilters(
-    new ResponseExceptionFilter(),
-    new PrismaClientExceptionFilter(),
+    new AllExceptionsFilter(app.get(HttpAdapterHost), logger),
   );
 
   const systemConfig = getSystemConfig(app.get(ConfigService));
