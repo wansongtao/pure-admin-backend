@@ -1,16 +1,50 @@
-# admin-pure-server
+English | [简体中文](/README.zh-CN.md)
+# PURE-ADMIN-BACKEND
 
-## Description
+**Pure Admin Backend** is a backend service designed for quickly building an admin management system. It is developed using **NestJS**, **Prisma**, **Redis**, **PostgreSQL**, and **Minio**, offering the following features:
 
-这是一个基于Nest.js的后端服务，用于提供后台管理系统的`REST API`接口服务。主要功能包括：用户管理、角色管理、权限管理、菜单管理、日志管理等。
+- User management
+- Role management
+- Permission management
+- File upload
 
-## Installation
+The corresponding frontend project is [pure-admin](https://github.com/wansongtao/pure-admin).
+
+## Quick Start
+
+### Prerequisites
+
+Ensure that you have the following installed:
+
+- [Node.js](https://nodejs.org/en/) (>=18.0.0)
+- [Redis](https://redis.io/) (>=6.0.0)
+- [PostgreSQL](https://www.postgresql.org/) (>=13.0)
+- [Minio](https://min.io/) (>=2021.6.0)
+- [NestJS](https://nestjs.com/) (>=10.0.0)
+- [Prisma](https://www.prisma.io/) (>=3.0.0)
+- [Jwt Key](#jwt-key) Generate your JWT key file.
+
+Update the `.env` file with your own configuration:  
+
+Example:
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname?schema=schema_name
+```
+
+### Clone the project
+
+```bash
+$ git clone https://github.com/wansongtao/pure-admin-backend.git
+```
+
+### Installation
 
 ```bash
 $ pnpm install
 ```
 
-## Running the app
+### Running the app
 
 ```bash
 # development
@@ -21,19 +55,6 @@ $ pnpm run start:dev
 
 # production mode
 $ pnpm run start:prod
-```
-
-## Test
-
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
 ```
 
 ## Jwt Key
@@ -52,4 +73,5 @@ openssl rsa -pubout -in private_key.pem -out public_key.pem
 
 ## License
 
-基于 [MIT](./LICENSE) 许可协议进行开源。
+[MIT licensed](LICENSE).
+
