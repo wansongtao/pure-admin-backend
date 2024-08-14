@@ -1,4 +1,13 @@
-import { Controller, Get, Ip, Headers, Post, Body, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Ip,
+  Headers,
+  Post,
+  Body,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
@@ -85,5 +94,19 @@ export class AuthController {
     @Req() req: { user: IPayload },
   ) {
     return this.authService.updatePassword(passwordDto, req.user.userId);
+  }
+
+  @ApiOperation({
+    summary: '刷新 token',
+  })
+  @ApiBearerAuth()
+  @ApiBaseResponse(LoginEntity)
+  @Public()
+  @Get('refresh_token')
+  refreshToken(
+    @Query('refreshToken') refreshToken: string,
+    @Headers('authorization') token: string,
+  ): Promise<LoginEntity> {
+    return this.authService.refreshToken(refreshToken, token.split(' ')[1]);
   }
 }

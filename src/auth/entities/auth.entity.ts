@@ -12,6 +12,9 @@ export class AuthEntity {
 export class LoginEntity {
   @ApiProperty({ description: 'token' })
   token: string;
+
+  @ApiProperty({ description: 'refreshToken' })
+  refreshToken: string;
 }
 
 class MenuEntity

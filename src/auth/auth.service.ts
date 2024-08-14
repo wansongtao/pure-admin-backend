@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -115,10 +115,17 @@ export class AuthService {
     const payload: IPayload = { userId: user.id };
     const token = this.jwtService.sign(payload, {
       algorithm: config.JWT_ALGORITHM,
+      expiresIn: config.JWT_EXPIRES_IN,
     });
+    const refreshToken = this.jwtService.sign(payload, {
+      algorithm: config.JWT_ALGORITHM,
+      expiresIn: config.JWT_REFRESH_TOKEN_EXPIRES_IN,
+    });
+
     const ssoKey = getSSOKey(user.id);
     this.redis.set(ssoKey, token, 'EX', config.JWT_EXPIRES_IN);
-    return { token };
+
+    return { token, refreshToken };
   }
 
   logout(token: string) {
@@ -293,5 +300,41 @@ export class AuthService {
       where: { id: userId },
       data: { password: hashPassword },
     });
+  }
+
+  async refreshToken(refreshToken: string, token: string) {
+    const blackListKey = getBlackListKey(token);
+    const isTokenInBlackList = await this.redis.exists(blackListKey);
+    if (isTokenInBlackList) {
+      throw new UnauthorizedException('Token is invalid');
+    }
+
+    let userId: string;
+    try {
+      userId = this.jwtService.verify<IPayload>(refreshToken).userId;
+    } catch {
+      throw new UnauthorizedException('Please login again');
+    }
+
+    const ssoKey = getSSOKey(userId);
+    const validToken = await this.redis.get(ssoKey);
+    if (validToken && validToken !== token) {
+      throw new UnauthorizedException('Sign in elsewhere');
+    }
+
+    const config = getSystemConfig(this.configService);
+    const payload: IPayload = { userId: userId };
+    const newToken = this.jwtService.sign(payload, {
+      algorithm: config.JWT_ALGORITHM,
+      expiresIn: config.JWT_EXPIRES_IN,
+    });
+    const newRefreshToken = this.jwtService.sign(payload, {
+      algorithm: config.JWT_ALGORITHM,
+      expiresIn: config.JWT_REFRESH_TOKEN_EXPIRES_IN,
+    });
+
+    this.redis.set(ssoKey, newToken, 'EX', config.JWT_EXPIRES_IN);
+
+    return { token: newToken, refreshToken: newRefreshToken };
   }
 }
