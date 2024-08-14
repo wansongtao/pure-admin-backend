@@ -16,6 +16,7 @@ interface ISystemConfig {
   readonly JWT_PUBLIC_KEY: string;
   readonly JWT_PRIVATE_KEY: string;
   readonly JWT_EXPIRES_IN: number;
+  readonly JWT_REFRESH_TOKEN_EXPIRES_IN: string;
   readonly CAPTCHA_EXPIRES_IN: number;
   readonly BCRYPT_SALT_ROUNDS: number;
   readonly MINIO_ENDPOINT: string;
@@ -58,6 +59,8 @@ const getSystemConfig = (configService: ConfigService) => {
     JWT_PUBLIC_KEY: configService.get<string>('JWT_PUBLIC_KEY') || '',
     JWT_PRIVATE_KEY: configService.get<string>('JWT_PRIVATE_KEY') || '',
     JWT_EXPIRES_IN: +configService.get<number>('JWT_EXPIRES_IN') || 86400,
+    JWT_REFRESH_TOKEN_EXPIRES_IN:
+      configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') || '7d',
     CAPTCHA_EXPIRES_IN: +configService.get<number>('CAPTCHA_EXPIRES_IN') || 120,
     BCRYPT_SALT_ROUNDS: +configService.get<number>('BCRYPT_SALT_ROUNDS') || 10,
     MINIO_ENDPOINT: configService.get<string>('MINIO_ENDPOINT') || '',
