@@ -28,8 +28,20 @@ Update the `.env` file with your own configuration:
 
 Example:
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname?schema=schema_name
+# Database configuration
+DB_USER="wansongtao"
+DB_PASSWORD="st.postgre"
+# The service name in docker-compose.dev.yml. If you use a local database, you can use localhost.
+DB_HOST="postgres"
+DB_PORT=5432
+DB_NAME="auth_admin"
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public"
+```
+
+If you have Docker installed, you can use the following command to start the development environment:
+
+```bash
+$ docker-compose -f docker-compose.dev.yml --env-file .env.development up --build
 ```
 
 ### Clone the project
