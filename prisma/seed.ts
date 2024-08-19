@@ -4,15 +4,19 @@ import { hash } from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const role = await prisma.role.create({
-    data: {
+  const role = await prisma.role.upsert({
+    create: {
       name: 'sAdmin',
       description: '系统默认超级管理员',
     },
+    update: {},
+    where: {
+      name: 'sAdmin',
+    },
   });
 
-  await prisma.permission.create({
-    data: {
+  await prisma.permission.upsert({
+    create: {
       name: '系统管理',
       path: 'system',
       type: 'DIRECTORY',
@@ -175,11 +179,18 @@ async function main() {
         ],
       },
     },
+    update: {},
+    where: {
+      name: '系统管理',
+    },
   });
 
-  const password = await hash('w.1admin', +process.env.BCRYPT_SALT_ROUNDS);
-  await prisma.user.create({
-    data: {
+  const password = await hash(
+    process.env.DEFAULT_ADMIN_PASSWORD,
+    +process.env.BCRYPT_SALT_ROUNDS,
+  );
+  await prisma.user.upsert({
+    create: {
       userName: 'sAdmin',
       password: password,
       profile: {
@@ -192,6 +203,10 @@ async function main() {
           roleId: role.id,
         },
       },
+    },
+    update: {},
+    where: {
+      userName: 'sAdmin',
     },
   });
 }
