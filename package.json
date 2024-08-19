@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "docker:dev": "docker-compose -f docker-compose.dev.yml --env-file .env.development up --build",
+    "docker:dev": "docker-compose up --build",
     "build": "cross-env NODE_ENV=production nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

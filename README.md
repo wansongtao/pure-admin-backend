@@ -41,7 +41,7 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_
 If you have Docker installed, you can use the following command to start the development environment:
 
 ```bash
-$ docker-compose -f docker-compose.dev.yml --env-file .env.development up --build
+$ docker-compose up --build
 ```
 
 ### Clone the project

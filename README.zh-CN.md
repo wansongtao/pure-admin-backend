@@ -40,7 +40,7 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_
 如果你安装了docker，可以使用以下命令启动开发环境：
 
 ```bash
-$ docker-compose -f docker-compose.dev.yml --env-file .env.development up --build
+$ docker-compose up --build
 ```
 
 ### 克隆项目
