@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -8,7 +6,7 @@ services:
       target: development  # 使用多阶段构建的目标阶段
     ports:
       - "${PORT:-3001}:3001"
-    env_file: .env.test
+    env_file: .env.development
     depends_on:
       - postgres
       - redis

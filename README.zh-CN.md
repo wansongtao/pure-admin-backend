@@ -28,10 +28,10 @@
 
 示例：
 ```bash
-# 如果你使用docker-compose.dev.yml启动开发环境，可以使用以下配置
+# 如果你使用docker-compose.yml启动开发环境，可以使用以下配置
 DB_USER="wansongtao"
 DB_PASSWORD="st.postgre"
-DB_HOST="postgres" # docker-compose.dev.yml中的服务名，如果你使用本地数据库，可以使用localhost
+DB_HOST="postgres" # docker-compose.yml中的服务名，如果你使用本地数据库，可以使用localhost
 DB_PORT=5432
 DB_NAME="auth_admin"
 DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public"
@@ -40,7 +40,7 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_
 如果你安装了docker，可以使用以下命令启动开发环境：
 
 ```bash
-$ docker-compose up --build
+$ docker-compose --env-file .env.development up --build
 ```
 
 ### 克隆项目
