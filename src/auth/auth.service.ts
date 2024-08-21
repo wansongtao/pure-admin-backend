@@ -322,6 +322,14 @@ export class AuthService {
       throw new UnauthorizedException('Sign in elsewhere');
     }
 
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId, deleted: false, disabled: false },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException('No user found');
+    }
+
     const config = getSystemConfig(this.configService);
     const payload: IPayload = { userId: userId };
     const newToken = this.jwtService.sign(payload, {
