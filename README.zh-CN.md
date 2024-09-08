@@ -40,6 +40,10 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_
 如果你安装了docker，可以使用以下命令启动开发环境：
 
 ```bash
+# 先启动minio
+$ docker-compose -f ./docker/docker-compose.minio.yml up -d
+
+# 启动开发环境
 $ docker-compose --env-file .env.development up --build
 ```
 
