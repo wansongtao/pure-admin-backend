@@ -10,11 +10,13 @@ services:
     depends_on:
       - postgres
       - redis
-      - minio
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     command: sh -c "pnpm migrate:dev && pnpm prisma:seed && pnpm run start:dev"
+    networks:
+      - app-network
+      - minio-network
 
   postgres:
     image: postgres:13
@@ -26,6 +28,8 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   redis:
     image: redis:6
@@ -33,20 +37,15 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
-
-  minio:
-    image: minio/minio
-    ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    environment:
-      MINIO_ROOT_USER: wansongtao
-      MINIO_ROOT_PASSWORD: w.12345.st
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+
+networks:
+  app-network:
+    driver: bridge
+  minio-network:
+    external: true
