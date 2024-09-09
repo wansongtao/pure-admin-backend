@@ -40,12 +40,14 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_
 如果你安装了docker，可以使用以下命令启动开发环境：
 
 ```bash
-# 先启动minio
+# 先启动minio，然后登录控制台(http://localhost:9001)创建一个Access Key与Secret Key并替换.env文件中minio的配置
 $ docker-compose -f ./docker/docker-compose.minio.yml up -d
 
-# 启动开发环境
+# 启动开发环境(先将.env文件中的MINIO_ENDPOINT替换为你的内网IP地址)
 $ docker-compose --env-file .env.development up --build
 ```
+
+为什么`MINIO_ENDPOINT`需要替换为内网IP地址？因为`minio`服务是在`docker`中运行的，而`nestjs`服务也是在`docker`中运行的，如果使用`localhost`访问`minio`服务，会导致`minio`服务无法访问，因为在容器中`localhost`代表容器本身。而使用容器名访问`minio`服务，`nestjs`可以正常访问，但是前端无法访问，因为前端是在浏览器中运行的，无法解析容器名。所以需要使用内网IP地址。
 
 ### 克隆项目
 
