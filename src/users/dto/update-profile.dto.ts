@@ -15,7 +15,15 @@ export class UpdateProfileDto {
   @ApiProperty({ description: '用户昵称', type: 'string', required: false })
   nickName?: string;
 
-  @IsUrl({ host_whitelist: ['localhost'] }, { message: '头像地址格式错误' })
+  @IsUrl(
+    {
+      host_whitelist: [
+        'localhost',
+        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+      ],
+    },
+    { message: '头像地址格式错误' },
+  )
   @IsOptional()
   @ApiProperty({ description: '头像', type: 'string', required: false })
   avatar?: string;
