@@ -11,15 +11,8 @@ services:
       MINIO_ROOT_USER: wansongtao
       MINIO_ROOT_PASSWORD: w.12345.st
       MINIO_DEFAULT_BUCKETS: avatar
-      MINIO_CORS_ALLOW_ORIGINS: "*"  # 允许所有来源的跨域请求
     command: /opt/bitnami/scripts/minio/run.sh --console-address ":9001"
-    networks:
-      - minio-network
     restart: unless-stopped
 
 volumes:
   minio_data:
-
-networks:
-  minio-network:
-    name: minio-network

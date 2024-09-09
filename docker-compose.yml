@@ -14,9 +14,6 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     command: sh -c "pnpm migrate:dev && pnpm prisma:seed && pnpm run start:dev"
-    networks:
-      - app-network
-      - minio-network
 
   postgres:
     image: postgres:13
@@ -28,8 +25,6 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
 
   redis:
     image: redis:6
@@ -37,15 +32,7 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
-    networks:
-      - app-network
 
 volumes:
   postgres_data:
   redis_data:
-
-networks:
-  app-network:
-    driver: bridge
-  minio-network:
-    external: true
