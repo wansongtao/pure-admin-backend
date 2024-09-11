@@ -102,7 +102,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiBaseResponse(LoginEntity)
   @Public()
-  @Get('refresh_token')
+  @Get('refresh-token')
   refreshToken(
     @Query('refreshToken') refreshToken: string,
     @Headers('authorization') token: string,
