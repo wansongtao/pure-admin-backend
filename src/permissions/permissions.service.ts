@@ -5,6 +5,7 @@ import { Prisma, Permission } from '@prisma/client';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { QueryPermissionDto } from './dto/query-permission.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class PermissionsService {
@@ -159,7 +160,14 @@ export class PermissionsService {
       return { list: [], total: 0 };
     }
 
-    const permissionTree = generateMenus(permissions);
+    const permissionTree = generateMenus(
+      permissions.map((item) => {
+        return {
+          ...item,
+          createdAt: dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+        };
+      }),
+    );
     if (permissionTree.length < offset) {
       return { list: [], total: 0 };
     }

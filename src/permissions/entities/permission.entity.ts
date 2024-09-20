@@ -78,7 +78,11 @@ export class PermissionList extends OmitType(PermissionEntity, [
   'cache',
   'props',
   'component',
+  'createdAt',
 ] as const) {
+  @ApiProperty({ description: '创建时间', type: 'string' })
+  createdAt: string;
+
   @ApiProperty({
     description: '子菜单',
     required: false,
