@@ -7,7 +7,10 @@ export class BaseQueryDto {
   @ApiProperty({ required: false, default: 10 })
   pageSize: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description: '开始时间(unix时间戳、一个有效的时间字符串)',
+  })
   beginTime?: string;
 
   @ApiProperty({ required: false })

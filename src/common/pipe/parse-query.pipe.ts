@@ -5,6 +5,7 @@ import {
   ArgumentMetadata,
 } from '@nestjs/common';
 import { BaseQueryDto } from '../dto/base-query.dto';
+import * as dayjs from 'dayjs';
 
 interface Options {
   type: 'number' | 'date' | 'string' | 'enum' | 'boolean';
@@ -108,23 +109,29 @@ export class ParseQueryPipe<T extends string> implements PipeTransform {
         return [undefined, value === 'true' || value === '1'];
       },
       date: () => {
-        const regexp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+        const timestampRegexp = /^\d+$/;
+        if (timestampRegexp.test(value)) {
+          const d = dayjs(Number(value))
+            .add(-480, 'm')
+            .format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
+
+          return [undefined, d];
+        }
+
+        const regexp =
+          /^\d{4}-\d{2}-\d{2}(T| )?(\d{2}:\d{2}:\d{2}(.\d{3})?Z?)?$/;
         if (!regexp.test(value)) {
           return [
             new BadRequestException(
-              'date format must be "YYYY-MM-DDTHH:mm:ss.SSSZ',
+              'date format must be a timestamp or a valid date string',
             ),
           ];
         }
 
-        const d = Date.parse(value);
-        if (isNaN(d)) {
-          return [
-            new BadRequestException(`${key} must be a valid date string`),
-          ];
-        }
-
-        return [undefined, value];
+        const d = dayjs(value)
+          .add(-480, 'm')
+          .format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
+        return [undefined, d];
       },
     };
 
