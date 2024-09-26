@@ -12,7 +12,7 @@ services:
       - redis
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/node_modules
+      - node_modules:/usr/src/app/node_modules
     command: sh -c "pnpm migrate:dev && pnpm prisma:seed && pnpm run start:dev"
 
   postgres:
@@ -36,3 +36,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  node_modules:
