@@ -17,6 +17,7 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "types": ["@prisma/client", "node"]
+    "types": ["@prisma/client", "node"],
+    "esModuleInterop": true
   }
 }

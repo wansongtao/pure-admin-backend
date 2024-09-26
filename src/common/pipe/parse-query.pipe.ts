@@ -5,7 +5,7 @@ import {
   ArgumentMetadata,
 } from '@nestjs/common';
 import { BaseQueryDto } from '../dto/base-query.dto';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 interface Options {
   type: 'number' | 'date' | 'string' | 'enum' | 'boolean';
