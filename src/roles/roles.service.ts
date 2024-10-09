@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { QueryRoleDto } from './dto/query-role.dto';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class RolesService {
@@ -78,7 +79,11 @@ export class RolesService {
     ]);
 
     return {
-      list: results[0],
+      list: results[0].map((item) => ({
+        ...item,
+        createdAt: dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+        updatedAt: dayjs(item.updatedAt).format('YYYY-MM-DD HH:mm:ss'),
+      })),
       total: results[1],
     };
   }

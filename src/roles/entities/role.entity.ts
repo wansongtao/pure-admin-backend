@@ -21,12 +21,23 @@ export class RoleEntity implements Omit<Role, 'deleted'> {
   updatedAt: Role['updatedAt'];
 }
 
+export class RoleListItem extends OmitType(RoleEntity, [
+  'createdAt',
+  'updatedAt',
+]) {
+  @ApiProperty({ description: '创建时间', type: 'string' })
+  createdAt: string;
+
+  @ApiProperty({ description: '更新时间', type: 'string' })
+  updatedAt: string;
+}
+
 export class RoleListEntity {
   @ApiProperty({ description: '总数', type: 'number' })
   total: number;
 
-  @ApiProperty({ description: '角色列表', type: [RoleEntity] })
-  list: RoleEntity[];
+  @ApiProperty({ description: '角色列表', type: [RoleListItem] })
+  list: RoleListItem[];
 }
 
 export class RoleDetailEntity extends OmitType(RoleEntity, [
