@@ -9,7 +9,7 @@ export class UserEntity implements Omit<User, 'deleted' | 'password'> {
   @ApiProperty({ description: '用户名', type: 'string' })
   userName: User['userName'];
 
-  @ApiProperty({ description: '是否禁用' })
+  @ApiProperty({ description: '是否禁用', type: 'boolean', default: false })
   disabled: User['disabled'];
 
   @ApiProperty({ description: '创建时间(UTC)', type: 'string' })
@@ -19,7 +19,10 @@ export class UserEntity implements Omit<User, 'deleted' | 'password'> {
   updatedAt: User['updatedAt'];
 }
 
-export class UserListItem extends UserEntity {
+export class UserListItem extends OmitType(UserEntity, [
+  'createdAt',
+  'updatedAt',
+]) {
   @ApiProperty({ description: '用户昵称', type: 'string' })
   nickName: ProfileEntity['nickName'];
 
@@ -28,6 +31,12 @@ export class UserListItem extends UserEntity {
 
   @ApiProperty({ description: '角色列表', type: [String] })
   roleNames: string[];
+
+  @ApiProperty({ description: '创建时间', type: 'string' })
+  createdAt: string;
+
+  @ApiProperty({ description: '更新时间', type: 'string' })
+  updatedAt: string;
 }
 
 export class UserListEntity {

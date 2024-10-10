@@ -11,6 +11,7 @@ import { QueryUserDto } from './dto/query-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserListItem } from './entities/user.entity';
 import getSystemConfig from '../common/config';
+import dayjs from 'dayjs';
 
 import type { IProfile } from '../common/types/index.d';
 import { Prisma } from '@prisma/client';
@@ -139,8 +140,8 @@ export class UsersService {
         id: user.id,
         userName: user.user_name,
         disabled: user.disabled,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
+        createdAt: dayjs(user.created_at).format('YYYY-MM-DD HH:mm:ss'),
+        updatedAt: dayjs(user.updated_at).format('YYYY-MM-DD HH:mm:ss'),
         avatar: user.avatar,
         nickName: user.nick_name,
         roleNames,
