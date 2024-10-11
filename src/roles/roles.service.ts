@@ -225,28 +225,43 @@ export class RolesService {
   }
 
   async batchRemove(ids: number[]) {
-    const roleAndUsers: { role_name: string; user_name?: string }[] = await this
-      .prismaService.$queryRaw`
-      SELECT r.name as role_name, u.user_name
-      FROM roles r
-      LEFT JOIN role_in_user ur ON ur.role_id = r.id
-      LEFT JOIN users u ON u.id = ur.user_id AND u.deleted = false
-      WHERE r.id IN (${Prisma.join(ids)}) AND r.deleted = false
-    `;
-
-    const hasUser = roleAndUsers.some((item) => item.user_name);
-    if (hasUser) {
-      return {
-        statusCode: HttpStatus.NOT_ACCEPTABLE,
-        message:
-          'Some roles have been assigned to the user and cannot be deleted',
-      };
-    }
+    const roleAndUsers = await this.prismaService.role.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        deleted: false,
+      },
+      select: {
+        id: true,
+        roleInUser: {
+          select: {
+            users: {
+              select: {
+                id: true,
+                deleted: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (roleAndUsers.length !== ids.length) {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: 'Some roles not found',
+      };
+    }
+
+    const hasUser = roleAndUsers.some(
+      (item) => item.roleInUser.filter((user) => !user.users.deleted).length,
+    );
+    if (hasUser) {
+      return {
+        statusCode: HttpStatus.NOT_ACCEPTABLE,
+        message:
+          'Some roles have been assigned to the user and cannot be deleted',
       };
     }
 
