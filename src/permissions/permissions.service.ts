@@ -367,9 +367,10 @@ export class PermissionsService {
     const roleAndPermissions: {
       id: number;
       roles?: string;
-      children?: string;
+      children?: number[];
     }[] = await this.prismaService.$queryRaw`
-      SELECT p.id, STRING_AGG(DISTINCT r.name, ',') AS roles, STRING_AGG(DISTINCT cp.name, ',') AS children
+      SELECT p.id, STRING_AGG(DISTINCT r.name, ',') AS roles, 
+      COALESCE(NULLIF(ARRAY_AGG(DISTINCT cp.id), '{NULL}'), '{}') AS children
       FROM permissions p
       LEFT JOIN permissions cp ON p.id = cp.pid AND cp.deleted = false
       LEFT JOIN role_in_permission rp ON p.id = rp.permission_id
@@ -394,12 +395,22 @@ export class PermissionsService {
       };
     }
 
-    const hasChildren = roleAndPermissions.some((item) => item.children);
+    const hasChildren = roleAndPermissions.some((item) => item.children.length);
     if (hasChildren) {
-      return {
-        statusCode: HttpStatus.NOT_ACCEPTABLE,
-        message: 'Some menus have submenus and cannot be deleted',
-      };
+      const canDelete = roleAndPermissions.every((item) => {
+        if (!item.children.length) {
+          return true;
+        }
+
+        return item.children.every((childId) => ids.includes(childId));
+      });
+
+      if (!canDelete) {
+        return {
+          statusCode: HttpStatus.NOT_ACCEPTABLE,
+          message: 'Some menus have submenus and cannot be deleted',
+        };
+      }
     }
 
     await this.prismaService.permission.updateMany({
