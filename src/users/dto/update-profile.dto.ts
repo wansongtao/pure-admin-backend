@@ -15,6 +15,7 @@ export class UpdateProfileDto {
   @ApiProperty({ description: '用户昵称', type: 'string', required: false })
   nickName?: string;
 
+  @MaxLength(255, { message: '头像地址长度不能超过255个字符' })
   @IsUrl(
     {
       host_whitelist: [
