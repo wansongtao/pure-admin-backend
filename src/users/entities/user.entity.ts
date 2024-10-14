@@ -58,10 +58,16 @@ export class UserDetailEntity extends PickType(UserEntity, [
   roles: number[];
 }
 
-export class UserProfilesEntity extends OmitType(ProfileEntity, ['userId']) {
+export class UserProfilesEntity extends OmitType(ProfileEntity, [
+  'userId',
+  'birthday',
+]) {
   @ApiProperty({ description: '用户名', type: 'string' })
   userName: UserEntity['userName'];
 
   @ApiProperty({ description: '角色列表', type: [String] })
   roles: string[];
+
+  @ApiProperty({ description: '生日', type: 'string' })
+  birthday: string;
 }

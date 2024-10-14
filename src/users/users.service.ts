@@ -331,12 +331,18 @@ export class UsersService {
       email: userInfo.email,
       phone: userInfo.phone,
       gender: userInfo.gender,
-      birthday: userInfo.birthday,
+      birthday: userInfo.birthday
+        ? dayjs(userInfo.birthday).format('YYYY-MM-DD')
+        : '',
       description: userInfo.description,
     };
   }
 
   async updateProfile(id: string, profile: UpdateProfileDto) {
+    if (profile.birthday) {
+      profile.birthday = profile.birthday.slice(0, 10) + 'T00:00:00Z';
+    }
+
     await this.prismaService.profile.update({
       where: { userId: id },
       data: profile,

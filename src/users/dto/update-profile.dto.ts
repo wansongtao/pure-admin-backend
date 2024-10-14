@@ -48,7 +48,7 @@ export class UpdateProfileDto {
   @ApiProperty({ description: '邮箱', type: 'string', required: false })
   email?: string;
 
-  @Matches(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/, {
+  @Matches(/^\d{4}-\d{2}-\d{2}T?(\d{2}:\d{2}:\d{2}(.\d{3})?)?Z?$/, {
     message: '生日格式错误',
   })
   @IsOptional()
