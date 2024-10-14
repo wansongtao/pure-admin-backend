@@ -39,11 +39,13 @@ export class UpdateProfileDto {
   gender?: 'MA' | 'FE' | 'OT';
 
   @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式错误' })
+  @ValidateIf((o) => o.phone !== '')
   @IsOptional()
   @ApiProperty({ description: '手机号', type: 'string', required: false })
   phone?: string;
 
   @IsEmail({}, { message: '邮箱格式错误' })
+  @ValidateIf((o) => o.email !== '')
   @IsOptional()
   @ApiProperty({ description: '邮箱', type: 'string', required: false })
   email?: string;
@@ -56,6 +58,7 @@ export class UpdateProfileDto {
   birthday?: string;
 
   @MaxLength(150, { message: '个性签名长度不能超过150个字符' })
+  @ValidateIf((o) => o.description !== '')
   @IsOptional()
   @ApiProperty({ description: '个性签名', type: 'string', required: false })
   description?: string;
