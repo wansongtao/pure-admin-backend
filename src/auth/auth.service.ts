@@ -205,7 +205,7 @@ export class AuthService {
     }
 
     const tempMenus = userPermissions
-      .filter((item) => item.type !== 'BUTTON')
+      .filter((item) => item.type && item.type !== 'BUTTON')
       .map((item) => {
         return {
           id: item.id,
@@ -220,6 +220,7 @@ export class AuthService {
           props: item.props,
         };
       });
+
     const menus = generateMenus(tempMenus);
     userInfo.menus = menus;
     return userInfo;
