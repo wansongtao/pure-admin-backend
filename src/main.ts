@@ -11,9 +11,7 @@ import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 import { HttpAdapterHost } from '@nestjs/core';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: false,
-  });
+  const app = await NestFactory.create(AppModule);
   app.use(helmet());
 
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
