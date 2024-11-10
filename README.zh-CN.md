@@ -1,53 +1,28 @@
 简体中文 | [English](./README.md)
 # PURE-ADMIN-BACKEND
 
-**Pure Admin Backend** 是一个用于快速构建后台管理系统的后端服务。基于 **NestJS**、**Prisma**、**Redis**、**PostgreSQL**和**Minio** 开发。提供以下功能：
+**Pure Admin Backend** 是一个权限管理系统 Web 服务，使用 **RBAC0** 权限模型，支持接口级别的权限控制。
 
-- 用户管理
-- 角色管理
-- 权限管理
-- 文件上传
+配套的前端项目是 [pure-admin](https://github.com/wansongtao/pure-admin)。
 
-配套的前端项目是[pure-admin](https://github.com/wansongtao/pure-admin)。
+## 功能特性
+
+- 登录：支持单点登录，采用双 token 刷新登录凭证；
+- 用户管理：增删改查，支持关联多个角色，支持禁用用户；
+- 角色管理：增删改查，支持关联多个权限，支持禁用角色；
+- 权限管理：增删改查，支持接口级别的权限控制；
+- 日志管理：使用 winston 记录日志。
+
+## 技术栈
+
+`NodeJS` `NestJS` `PostgreSQL` `Prisma` `Redis` `Minio` `Docker` `Winston` `Swagger`
 
 ## 快速开始
 
 ### 先决条件
 
-确保已安装以下软件：
-
-- [Node.js](https://nodejs.org/en/) (>=18.0.0)
-- [Redis](https://redis.io/) (>=6.0.0)
-- [PostgreSQL](https://www.postgresql.org/) (>=13.0)
-- [Minio](https://min.io/) (>=2021.6.0)
-- [NestJS](https://nestjs.com/) (>=10.0.0)
-- [Prisma](https://www.prisma.io/) (>=3.0.0)
-- [Jwt Key](#jwt-key) 生成jwt密钥文件。
-
-更新 `.env` 文件中的配置。
-
-示例：
-```bash
-# 如果你使用docker-compose.yml启动开发环境，可以使用以下配置
-DB_USER="wansongtao"
-DB_PASSWORD="st.postgre"
-DB_HOST="postgres" # docker-compose.yml中的服务名，如果你使用本地数据库，可以使用localhost
-DB_PORT=5432
-DB_NAME="auth_admin"
-DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public"
-```
-
-如果你安装了docker，可以使用以下命令启动开发环境：
-
-```bash
-# 先启动minio，然后登录控制台(http://localhost:9001)创建一个Access Key与Secret Key并替换.env文件中minio的配置
-$ docker-compose -f ./docker/docker-compose.minio.yml up -d
-
-# 启动开发环境(先将.env文件中的MINIO_ENDPOINT替换为你的内网IP地址)
-$ docker-compose --env-file .env.development up --build
-```
-
-为什么`MINIO_ENDPOINT`需要替换为内网IP地址？因为`minio`服务是在`docker`中运行的，而`nestjs`服务也是在`docker`中运行的，如果使用`localhost`访问`minio`服务，会导致`minio`服务无法访问，因为在容器中`localhost`代表容器本身。而使用容器名访问`minio`服务，`nestjs`可以正常访问，但是前端无法访问，因为前端是在浏览器中运行的，无法解析容器名。所以需要使用内网IP地址。
+1. 安装 NodeJS 18+；
+2. 安装 Docker。
 
 ### 克隆项目
 
@@ -55,37 +30,62 @@ $ docker-compose --env-file .env.development up --build
 $ git clone https://github.com/wansongtao/pure-admin-backend.git
 ```
 
-### 安装
+### 生成 Jwt Key
+
+在项目根目录下，创建 `key` 文件夹，然后进入该目录创建以下密钥。
+
+```bash
+# 生成私钥
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+
+# 生成公钥
+openssl rsa -pubout -in private_key.pem -out public_key.pem
+```
+
+### 启动容器服务
+
+使用 docker-compose 启动容器：
+
+```bash
+$ docker-compose --env-file .env.development up --build
+```
+
+### 设置 Minio
+
+#### 设置 Minio 访问密钥
+
+在浏览器中访问 `http://localhost:9001`，使用 `docker-compose.yml` 里设置的用户名和密码登录 Minio。
+
+选中左边菜单栏的 `Access Keys`，然后点击右上角的 `Create access key`，创建一个新的访问密钥。
+
+然后你可以选择将新的访问密钥填入 `.env.development` 文件中的 `MINIO_ACCESS_KEY` 和 `MINIO_SECRET_KEY`，或者将 `.env.development` 文件中的 `MINIO_ACCESS_KEY` 和 `MINIO_SECRET_KEY` 复制到创建的访问密钥中。
+
+#### 设置 Minio 存储桶
+
+在浏览器中访问 `http://localhost:9001`，使用 `docker-compose.yml` 里设置的用户名和密码登录 Minio。
+
+选中左边菜单栏的 `Buckets`，然后点击右边的 `avatar` 桶，进入桶后，选中 `Anonymous`，然后点击右上角的 `Add Access Rule`，在弹窗中的 `Prefix` 输入 `/`， `Access` 选择 `readonly` ，点击 `Save`即可。
+
+### 安装依赖
 
 ```bash
 $ pnpm install
 ```
 
-### 运行应用
+### 本地开发
 
 ```bash
-# 开发模式
+# 迁移数据库
+$ pnpm run migrate:dev
+
+# 执行数据库种子
+$ pnpm run prisma:seed
+
+# 启动开发模式
 $ pnpm run start
 
-# 监视模式
+# 启动监视模式（代码更新，自动重启服务）
 $ pnpm run start:dev
-
-# 生产模式
-$ pnpm run start:prod
-```
-
-## Jwt Key
-
-### 创建私钥
-
-```bash
-openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
-```
-
-### 创建公钥
-
-```bash
-openssl rsa -pubout -in private_key.pem -out public_key.pem
 ```
 
 ## 许可证

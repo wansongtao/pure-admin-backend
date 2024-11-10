@@ -1,90 +1,91 @@
 English | [简体中文](/README.zh-CN.md)
 # PURE-ADMIN-BACKEND
 
-**Pure Admin Backend** is a backend service designed for quickly building an admin management system. It is developed using **NestJS**, **Prisma**, **Redis**, **PostgreSQL**, and **Minio**, offering the following features:
+**Pure Admin Backend** is a permission management system web service that uses the **RBAC0** permission model and supports interface-level permission control.
 
-- User management
-- Role management
-- Permission management
-- File upload
+The front-end project is [pure-admin](https://github.com/wansongtao/pure-admin).
 
-The corresponding frontend project is [pure-admin](https://github.com/wansongtao/pure-admin).
+## Features
+
+- Login: Supports single sign-on and uses double token refresh login credentials;
+- User management: Create, delete, update, and query users, support associating multiple roles, and support disabling users;
+- Role management: Create, delete, update, and query roles, support associating multiple permissions, and support disabling roles;
+- Permission management: Create, delete, update, and query permissions, support interface-level permission control;
+- Log management: Use winston to log.
+
+## Technology Stack
+
+`NodeJS` `NestJS` `PostgreSQL` `Prisma` `Redis` `Minio` `Docker` `Winston` `Swagger`
 
 ## Quick Start
 
 ### Prerequisites
 
-Ensure that you have the following installed:
+1. Install NodeJS 18+;
+2. Install Docker.
 
-- [Node.js](https://nodejs.org/en/) (>=18.0.0)
-- [Redis](https://redis.io/) (>=6.0.0)
-- [PostgreSQL](https://www.postgresql.org/) (>=13.0)
-- [Minio](https://min.io/) (>=2021.6.0)
-- [NestJS](https://nestjs.com/) (>=10.0.0)
-- [Prisma](https://www.prisma.io/) (>=3.0.0)
-- [Jwt Key](#jwt-key) Generate your JWT key file.
-
-Update the `.env` file with your own configuration:  
-
-Example:
-```bash
-# Database configuration
-DB_USER="wansongtao"
-DB_PASSWORD="st.postgre"
-# The service name in docker-compose.yml. If you use a local database, you can use localhost.
-DB_HOST="postgres"
-DB_PORT=5432
-DB_NAME="auth_admin"
-DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public"
-```
-
-If you have Docker installed, you can use the following command to start the development environment:
-
-```bash
-# Start Minio first
-$ docker-compose -f ./docker/docker-compose.minio.yml up -d
-
-# Start the development environment
-$ docker-compose --env-file .env.development up --build
-```
-
-### Clone the project
+### Clone the Project
 
 ```bash
 $ git clone https://github.com/wansongtao/pure-admin-backend.git
 ```
 
-### Installation
+### Generate Jwt Key
+
+Create the `key` folder in the root directory of the project, then enter the directory to create the following keys.
+
+```bash
+# Generate private key
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+
+# Generate public key
+openssl rsa -pubout -in private_key.pem -out public_key.pem
+```
+
+### Start the Container Service
+
+Start the container using docker-compose:
+
+```bash
+$ docker-compose --env-file .env.development up --build
+```
+
+### Set Minio
+
+#### Set Minio Access Key
+
+Access `http://localhost:9001` in the browser, log in to Minio using the username and password set in `docker-compose.yml`.
+
+Select `Access Keys` in the left menu bar, then click `Create access key` in the upper right corner to create a new access key.
+
+You can then choose to fill the new access keys into the `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` fields in the `.env.development` file, or copy the `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` from the `.env.development` file to the created access keys.
+
+#### Set Minio Bucket
+
+Access `http://localhost:9001` in the browser, log in to Minio using the username and password set in `docker-compose.yml`.
+
+Select `Buckets` in the left menu bar, then click the `avatar` bucket on the right. After entering the bucket, select `Anonymous`, then click `Add Access Rule` in the upper right corner. In the popup window, enter `/` in the `Prefix` field, select `readonly` for `Access`, and click `Save`.
+
+### Install Dependencies
 
 ```bash
 $ pnpm install
 ```
 
-### Running the app
+### Start the Service
 
 ```bash
-# development
+# Migrate the database
+$ pnpm run migrate:dev
+
+# Seed the database
+$ pnpm run prisma:seed
+
+# Start the service
 $ pnpm run start
 
-# watch mode
+# Start the development mode
 $ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
-```
-
-## Jwt Key
-
-### create private key
-
-```bash
-openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
-```
-
-### create public key
-
-```bash
-openssl rsa -pubout -in private_key.pem -out public_key.pem
 ```
 
 ## License
