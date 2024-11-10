@@ -1,22 +1,7 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development  # 使用多阶段构建的目标阶段
-    ports:
-      - "${PORT:-3001}:3001"
-    env_file: .env.development
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - .:/usr/src/app
-      - node_modules:/usr/src/app/node_modules
-    command: sh -c "pnpm migrate:dev && pnpm prisma:seed && pnpm run start:dev"
-
   postgres:
     image: postgres:13
+    restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -33,7 +18,22 @@ services:
     volumes:
       - redis_data:/data
 
+  minio:
+    image: bitnami/minio:latest
+    container_name: pure-admin-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: wansongtao
+      MINIO_ROOT_PASSWORD: w.12345.st
+      MINIO_DEFAULT_BUCKETS: avatar
+    command: /opt/bitnami/scripts/minio/run.sh --console-address ":9001"
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
-  node_modules:
+  minio_data:
