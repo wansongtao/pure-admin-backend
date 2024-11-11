@@ -7,11 +7,11 @@ The front-end project is [pure-admin](https://github.com/wansongtao/pure-admin).
 
 ## Features
 
-- Login: Supports single sign-on and uses double token refresh login credentials;
-- User management: Create, delete, update, and query users, support associating multiple roles, and support disabling users;
-- Role management: Create, delete, update, and query roles, support associating multiple permissions, and support disabling roles;
-- Permission management: Create, delete, update, and query permissions, support interface-level permission control;
-- Log management: Use winston to log.
+- Login: Supports single sign-on, using dual tokens to refresh login credentials;
+- User Management: CRUD operations, supports multiple role associations, and user disabling;
+- Role Management: CRUD operations, supports multiple permission associations, and role disabling;
+- Permission Management: CRUD operations, supports interface-level permission control;
+- Log Management: Uses winston for logging.
 
 ## Technology Stack
 
@@ -32,7 +32,7 @@ $ git clone https://github.com/wansongtao/pure-admin-backend.git
 
 ### Generate Jwt Key
 
-Create the `key` folder in the root directory of the project, then enter the directory to create the following keys.
+Create a `key` folder in the project root directory, then enter the directory and create the following keys.
 
 ```bash
 # Generate private key
@@ -42,29 +42,29 @@ openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:204
 openssl rsa -pubout -in private_key.pem -out public_key.pem
 ```
 
-### Start the Container Service
+### Start Container Services
 
-Start the container using docker-compose:
+Use docker-compose to start containers:
 
 ```bash
 $ docker-compose --env-file .env.development up --build
 ```
 
-### Set Minio
+### Configure Minio
 
-#### Set Minio Access Key
+#### Set Minio Access Keys
 
-Access `http://localhost:9001` in the browser, log in to Minio using the username and password set in `docker-compose.yml`.
+Access `http://localhost:9001` in your browser and log in to Minio using the username and password set in `docker-compose.yml`.
 
-Select `Access Keys` in the left menu bar, then click `Create access key` in the upper right corner to create a new access key.
+Select `Access Keys` from the left menu bar, then click `Create access key` in the top right corner to create a new access key.
 
-You can then choose to fill the new access keys into the `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` fields in the `.env.development` file, or copy the `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` from the `.env.development` file to the created access keys.
+You can then either fill the new access key into `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` in the `.env.development` file, or copy the `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY` from the `.env.development` file into the created access key.
 
 #### Set Minio Bucket
 
-Access `http://localhost:9001` in the browser, log in to Minio using the username and password set in `docker-compose.yml`.
+Access `http://localhost:9001` in your browser and log in to Minio using the username and password set in `docker-compose.yml`.
 
-Select `Buckets` in the left menu bar, then click the `avatar` bucket on the right. After entering the bucket, select `Anonymous`, then click `Add Access Rule` in the upper right corner. In the popup window, enter `/` in the `Prefix` field, select `readonly` for `Access`, and click `Save`.
+Select `Buckets` from the left menu bar, then click the `avatar` bucket on the right. After entering the bucket, select `Anonymous`, then click `Add Access Rule` in the top right corner. In the popup, enter `/` for `Prefix`, select `readonly` for `Access`, and click `Save`.
 
 ### Install Dependencies
 
