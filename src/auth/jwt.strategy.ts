@@ -8,7 +8,7 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { getSSOKey } from '../common/config/redis.key';
+import { getSSOKey, getBlackListKey } from '../common/config/redis.key';
 import getSystemConfig from '../common/config';
 
 import type { IPayload } from '../common/types';
@@ -36,6 +36,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(req: Request, payload: IPayload) {
     const token = req.headers.authorization.split(' ')[1];
+    const blackListKey = getBlackListKey(token);
+    const isBlackListed = await this.redis.exists(blackListKey);
+    if (isBlackListed) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
     const ssoKey = getSSOKey(payload.userId);
     const validToken = await this.redis.get(ssoKey);
     if (validToken !== token) {
