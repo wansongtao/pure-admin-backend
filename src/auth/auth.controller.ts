@@ -1,28 +1,16 @@
-import {
-  Controller,
-  Get,
-  Ip,
-  Headers,
-  Post,
-  Body,
-  Req,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Ip, Headers, Post, Body, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiBaseResponse } from '../common/decorators/api-response.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { PasswordDto } from './dto/password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import {
   AuthEntity,
   LoginEntity,
   UserInfoEntity,
 } from './entities/auth.entity';
-import {
-  BaseResponseEntity,
-  NullResponseEntity,
-} from '../common/entities/api-response.entity';
 
 import type { IPayload } from '../common/types';
 
@@ -54,7 +42,7 @@ export class AuthController {
     @Body() { userName, password, captcha }: LoginDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
-  ): Promise<LoginEntity | BaseResponseEntity> {
+  ): Promise<LoginEntity> {
     return this.authService.login(userName, password, captcha, {
       ip,
       userAgent,
@@ -66,7 +54,7 @@ export class AuthController {
   })
   @ApiBearerAuth()
   @ApiBaseResponse()
-  @Get('logout')
+  @Post('logout')
   logout(@Headers('authorization') token: string) {
     return this.authService.logout(token.split(' ')[1]);
   }
@@ -77,9 +65,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiBaseResponse(UserInfoEntity)
   @Get('userinfo')
-  getUserInfo(
-    @Req() req: { user: IPayload },
-  ): Promise<UserInfoEntity | NullResponseEntity> {
+  getUserInfo(@Req() req: { user: IPayload }): Promise<UserInfoEntity> {
     return this.authService.getUserInfo(req.user.userId);
   }
 
@@ -102,11 +88,14 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiBaseResponse(LoginEntity)
   @Public()
-  @Get('refresh-token')
+  @Post('refresh-token')
   refreshToken(
-    @Query('refreshToken') refreshToken: string,
+    @Body() data: RefreshTokenDto,
     @Headers('authorization') token: string,
   ): Promise<LoginEntity> {
-    return this.authService.refreshToken(refreshToken, token.split(' ')[1]);
+    return this.authService.refreshToken(
+      data.refreshToken,
+      token.split(' ')[1],
+    );
   }
 }

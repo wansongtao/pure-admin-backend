@@ -1,4 +1,10 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -85,10 +91,7 @@ export class AuthService {
   ) {
     const isCaptchaValid = await this.verifyCaptcha(ip, userAgent, captcha);
     if (!isCaptchaValid) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Captcha is invalid',
-      };
+      throw new BadRequestException('Captcha is invalid');
     }
 
     const user = await this.prismaService.user.findUnique({
@@ -96,24 +99,18 @@ export class AuthService {
       select: { id: true, password: true },
     });
     if (!user) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'UserName is invalid',
-      };
+      throw new BadRequestException('UserName is invalid');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Password is invalid',
-      };
+      throw new BadRequestException('Password is invalid');
     }
 
     const config = getSystemConfig(this.configService);
 
     const payload: IPayload = { userId: user.id };
-    const token = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign(payload, {
       algorithm: config.JWT_ALGORITHM,
       expiresIn: config.JWT_EXPIRES_IN,
     });
@@ -123,13 +120,13 @@ export class AuthService {
     });
 
     const ssoKey = getSSOKey(user.id);
-    this.redis.set(ssoKey, token, 'EX', config.JWT_EXPIRES_IN);
+    this.redis.set(ssoKey, accessToken, 'EX', config.JWT_EXPIRES_IN);
 
-    return { token, refreshToken };
+    return { accessToken, refreshToken };
   }
 
-  logout(token: string) {
-    const blackListKey = getBlackListKey(token);
+  logout(accessToken: string) {
+    const blackListKey = getBlackListKey(accessToken);
     this.redis.set(
       blackListKey,
       '',
@@ -174,7 +171,7 @@ export class AuthService {
     `;
 
     if (!userPermissions?.length) {
-      return { statusCode: HttpStatus.NOT_FOUND, message: 'User not found' };
+      throw new NotFoundException('User not found');
     }
 
     const userInfo: UserInfoEntity = {
@@ -303,8 +300,8 @@ export class AuthService {
     });
   }
 
-  async refreshToken(refreshToken: string, token: string) {
-    const blackListKey = getBlackListKey(token);
+  async refreshToken(refreshToken: string, accessToken: string) {
+    const blackListKey = getBlackListKey(accessToken);
     const isTokenInBlackList = await this.redis.exists(blackListKey);
     if (isTokenInBlackList) {
       throw new UnauthorizedException('Token is invalid');
@@ -319,7 +316,7 @@ export class AuthService {
 
     const ssoKey = getSSOKey(userId);
     const validToken = await this.redis.get(ssoKey);
-    if (validToken && validToken !== token) {
+    if (validToken && validToken !== accessToken) {
       throw new UnauthorizedException('Sign in elsewhere');
     }
 
@@ -333,7 +330,7 @@ export class AuthService {
 
     const config = getSystemConfig(this.configService);
     const payload: IPayload = { userId: userId };
-    const newToken = this.jwtService.sign(payload, {
+    const newAccessToken = this.jwtService.sign(payload, {
       algorithm: config.JWT_ALGORITHM,
       expiresIn: config.JWT_EXPIRES_IN,
     });
@@ -342,8 +339,8 @@ export class AuthService {
       expiresIn: config.JWT_REFRESH_TOKEN_EXPIRES_IN,
     });
 
-    this.redis.set(ssoKey, newToken, 'EX', config.JWT_EXPIRES_IN);
+    this.redis.set(ssoKey, newAccessToken, 'EX', config.JWT_EXPIRES_IN);
 
-    return { token: newToken, refreshToken: newRefreshToken };
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 }

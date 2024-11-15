@@ -10,10 +10,10 @@ export class AuthEntity {
 }
 
 export class LoginEntity {
-  @ApiProperty({ description: 'token' })
-  token: string;
+  @ApiProperty({ description: '访问令牌' })
+  accessToken: string;
 
-  @ApiProperty({ description: 'refreshToken' })
+  @ApiProperty({ description: '刷新令牌' })
   refreshToken: string;
 }
 
