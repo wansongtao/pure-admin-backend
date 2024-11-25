@@ -39,8 +39,7 @@ COPY --chown=node:node key ./key
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
 RUN npm install --production
-RUN npm install dotenv-cli prisma-docs-generator
-RUN npm run prisma:generate
+RUN npm install dotenv-cli
 
 # 确保所有文件权限正确
 RUN chown -R node:node .

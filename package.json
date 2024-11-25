@@ -2,9 +2,9 @@
   "name": "pure-admin-backend",
   "version": "1.0.0",
   "description": "",
-  "author": "",
+  "author": "wansongtao",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "start": "dotenv -e .env.development -- nest start",
     "start:dev": "dotenv -e .env.development -- nest start --watch",
@@ -24,7 +24,7 @@
     "prisma:generate": "npx prisma generate",
     "prisma:studio": "dotenv -e .env.development -- npx prisma studio",
     "prisma:seed": "dotenv -e .env.development -- npx prisma db seed",
-    "prisma:seed:prod": "dotenv -e .env.production.local -- npx prisma db seed",
+    "prisma:seed:deploy": "dotenv -e .env.production.local -- npx prisma db seed",
     "prisma:docs": "npx http-server ./prisma/docs/ -p 5555"
   },
   "dependencies": {

@@ -9,10 +9,8 @@ services:
       - "${APP_PORT:-3000}:3000"
     env_file: .env.production.local
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
     command: sh -c "npm run migrate:deploy && node /usr/src/app/dist/main.js"
 
   postgres:
