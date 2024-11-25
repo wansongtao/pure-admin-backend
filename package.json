@@ -8,7 +8,7 @@
   "scripts": {
     "start": "dotenv -e .env.development -- nest start",
     "start:dev": "dotenv -e .env.development -- nest start --watch",
-    "build": "cross-env NODE_ENV=production nest build",
+    "build": "dotenv -e .env.production.local -- nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start:debug": "dotenv -e .env.development -- nest start --debug --watch",
     "start:prod": "cross-env NODE_ENV=production node dist/main",
@@ -20,10 +20,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev",
     "migrate:dev:create": "dotenv -e .env.development -- npx prisma migrate dev --create-only",
-    "migrate:deploy": "dotenv -e .env.production -- npx prisma migrate deploy",
+    "migrate:deploy": "dotenv -e .env.production.local -- npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
     "prisma:studio": "dotenv -e .env.development -- npx prisma studio",
     "prisma:seed": "dotenv -e .env.development -- npx prisma db seed",
+    "prisma:seed:prod": "dotenv -e .env.production.local -- npx prisma db seed",
     "prisma:docs": "npx http-server ./prisma/docs/ -p 5555"
   },
   "dependencies": {

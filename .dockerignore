@@ -1,6 +1,9 @@
+*.md
+node_modules/
+.git/
+.DS_Store
+.vscode/
 .dockerignore
-Dockerfile
-.dockerignore
-node_modules
-npm-debug.log
-dist
+.npmrc
+LICENSE
+*.png
