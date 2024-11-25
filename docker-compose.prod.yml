@@ -11,7 +11,7 @@ services:
     depends_on:
       - postgres
       - redis
-    command: sh -c "npm run migrate:deploy && node /usr/src/app/dist/main.js"
+    command: sh -c "npm run migrate:deploy && npm run prisma:seed:deploy && node /usr/src/app/dist/main.js"
 
   postgres:
     container_name: pure-admin-postgres

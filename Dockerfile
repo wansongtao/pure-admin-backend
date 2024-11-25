@@ -31,7 +31,12 @@ COPY --chown=node:node key ./key
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/package*.json ./
+# 执行 prisma seed 脚本需要 tsconfig.json
+COPY --chown=node:node --from=build /usr/src/app/tsconfig.json ./
 COPY --chown=node:node prisma ./prisma
+
+# 确保 ts-node 可用于 seed 脚本
+RUN npm install --save-dev ts-node
 
 USER node
 
