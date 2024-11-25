@@ -23,7 +23,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      envFilePath:
+        process.env.NODE_ENV === 'production'
+          ? '../.env.production.local'
+          : `../.env.${process.env.NODE_ENV || 'development'}`,
       isGlobal: true,
       cache: true,
     }),
