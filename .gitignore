@@ -9,8 +9,6 @@
 
 # prisma
 /prisma/docs
-/prisma/migrations
-*.sql
 
 # Logs
 logs
