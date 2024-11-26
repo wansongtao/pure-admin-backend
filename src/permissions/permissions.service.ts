@@ -246,7 +246,14 @@ export class PermissionsService {
       updatePermissionDto.sort = 0;
     }
 
-    const blackList = ['pid', 'type', 'name', 'permission', 'disabled'];
+    const blackList = [
+      'pid',
+      'type',
+      'name',
+      'permission',
+      'disabled',
+      'component',
+    ];
     if (
       !Object.keys(updatePermissionDto).some((key) => blackList.includes(key))
     ) {
