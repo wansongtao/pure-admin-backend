@@ -4,14 +4,15 @@ import { hash } from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
+  const roleName = 'superAdmin';
   const role = await prisma.role.upsert({
     create: {
-      name: 'sAdmin',
+      name: roleName,
       description: '系统默认超级管理员',
     },
     update: {},
     where: {
-      name: 'sAdmin',
+      name: roleName,
     },
   });
 
@@ -32,7 +33,7 @@ async function main() {
             name: '用户管理',
             path: 'user',
             icon: 'user',
-            component: '/system/user/index.vue',
+            component: '/system/user/UserView.vue',
             cache: true,
             roleInPermission: {
               create: {
@@ -88,7 +89,7 @@ async function main() {
             name: '菜单管理',
             path: 'menu',
             icon: 'menu',
-            component: '/system/menu/index.vue',
+            component: '/system/menu/MenuView.vue',
             cache: true,
             roleInPermission: {
               create: {
@@ -134,7 +135,7 @@ async function main() {
             name: '角色管理',
             path: 'role',
             icon: 'role',
-            component: '/system/role/index.vue',
+            component: '/system/role/RoleView.vue',
             cache: true,
             roleInPermission: {
               create: {
@@ -189,10 +190,12 @@ async function main() {
     process.env.DEFAULT_ADMIN_PASSWORD,
     +process.env.BCRYPT_SALT_ROUNDS,
   );
+  const defaultUserName = process.env.DEFAULT_USERNAME || 'sAdmin';
+
   await prisma.user.upsert({
     create: {
-      userName: 'sAdmin',
-      password: password,
+      userName: defaultUserName,
+      password,
       profile: {
         create: {
           nickName: '超级管理员',
@@ -206,7 +209,7 @@ async function main() {
     },
     update: {},
     where: {
-      userName: 'sAdmin',
+      userName: defaultUserName,
     },
   });
 }
