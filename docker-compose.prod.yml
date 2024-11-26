@@ -1,6 +1,7 @@
 services:
   app:
     container_name: pure-admin-services
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,6 +17,7 @@ services:
   postgres:
     container_name: pure-admin-postgres
     image: postgres:13
+    restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -28,6 +30,7 @@ services:
   redis:
     container_name: pure-admin-redis
     image: redis:6
+    restart: always
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:

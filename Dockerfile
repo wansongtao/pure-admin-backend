@@ -6,9 +6,7 @@ FROM node:18-alpine As build
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-COPY prisma ./prisma
 
-# 安装依赖
 RUN npm install
 
 # 复制其余文件
