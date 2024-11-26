@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --registry=http://registry.npmmirror.com
 
 # 复制其余文件
 COPY . .
@@ -34,7 +34,7 @@ COPY --chown=node:node --from=build /usr/src/app/tsconfig.json ./
 COPY --chown=node:node prisma ./prisma
 
 # 确保 ts-node 可用于 seed 脚本
-RUN npm install --save-dev ts-node
+RUN npm install --save-dev ts-node --registry=http://registry.npmmirror.com
 
 USER node
 

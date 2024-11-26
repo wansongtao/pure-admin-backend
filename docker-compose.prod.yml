@@ -1,5 +1,5 @@
 services:
-  app:
+  pure_services:
     container_name: pure-admin-services
     restart: always
     build:
@@ -7,14 +7,14 @@ services:
       dockerfile: Dockerfile
       target: production  # 使用多阶段构建的目标阶段
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${PORT:-3000}:3000"
     env_file: .env.production.local
     depends_on:
-      - postgres
-      - redis
+      - pure_postgres
+      - pure_redis
     command: sh -c "npm run migrate:deploy && npm run prisma:seed:deploy && node /usr/src/app/dist/main.js"
 
-  postgres:
+  pure_postgres:
     container_name: pure-admin-postgres
     image: postgres:13
     restart: always
@@ -27,7 +27,7 @@ services:
     volumes:
       - pure_postgres_data:/var/lib/postgresql/data
 
-  redis:
+  pure_redis:
     container_name: pure-admin-redis
     image: redis:6
     restart: always
