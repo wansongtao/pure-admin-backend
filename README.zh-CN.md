@@ -5,6 +5,10 @@
 
 配套的前端项目是 [pure-admin](https://github.com/wansongtao/pure-admin)。
 
+在线预览：[pure-admin](http://blog.wansongtao.com/admin/login)。
+账号：admin
+密码：d.12345
+
 ## 功能特性
 
 - 登录：支持单点登录，采用双 token 刷新登录凭证；

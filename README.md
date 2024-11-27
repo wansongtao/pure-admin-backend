@@ -5,6 +5,10 @@ English | [简体中文](/README.zh-CN.md)
 
 The front-end project is [pure-admin](https://github.com/wansongtao/pure-admin).
 
+Online preview: [pure-admin](http://blog.wansongtao.com/admin/login).
+Account: admin
+Password: d.12345
+
 ## Features
 
 - Login: Supports single sign-on, using dual tokens to refresh login credentials;
